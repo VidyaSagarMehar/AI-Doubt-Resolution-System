@@ -25,16 +25,8 @@ export default function DoubtDetailPage() {
         const payload = await response.json();
 
         if (!response.ok) {
-          if (response.status === 401) {
-            window.location.href = "/login";
-            return;
-          }
-
-          if (response.status === 403) {
-            window.location.href = "/doubts";
-            return;
-          }
-
+          if (response.status === 401) { window.location.href = "/login"; return; }
+          if (response.status === 403) { window.location.href = "/doubts"; return; }
           throw new Error(payload.error ?? "Failed to load doubt.");
         }
 
@@ -46,16 +38,11 @@ export default function DoubtDetailPage() {
       }
     };
 
-    if (params.id) {
-      void loadDoubt();
-    }
+    if (params.id) void loadDoubt();
   }, [params.id]);
 
   const submitFeedback = async (isHelpful: boolean) => {
-    if (!doubt) {
-      return;
-    }
-
+    if (!doubt) return;
     setFeedbackLoading(true);
     try {
       const response = await fetch("/api/feedback", {
@@ -64,18 +51,9 @@ export default function DoubtDetailPage() {
         body: JSON.stringify({ doubtId: doubt._id, isHelpful }),
       });
       const payload = await response.json();
-
       if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-
-        if (response.status === 403) {
-          window.location.href = "/doubts";
-          return;
-        }
-
+        if (response.status === 401) { window.location.href = "/login"; return; }
+        if (response.status === 403) { window.location.href = "/doubts"; return; }
         throw new Error(payload.error ?? "Failed to submit feedback.");
       }
     } catch (err) {
@@ -86,10 +64,7 @@ export default function DoubtDetailPage() {
   };
 
   const escalate = async () => {
-    if (!doubt) {
-      return;
-    }
-
+    if (!doubt) return;
     setEscalating(true);
     try {
       const response = await fetch("/api/escalate", {
@@ -98,21 +73,11 @@ export default function DoubtDetailPage() {
         body: JSON.stringify({ doubtId: doubt._id }),
       });
       const payload = await response.json();
-
       if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-
-        if (response.status === 403) {
-          window.location.href = "/doubts";
-          return;
-        }
-
+        if (response.status === 401) { window.location.href = "/login"; return; }
+        if (response.status === 403) { window.location.href = "/doubts"; return; }
         throw new Error(payload.error ?? "Failed to escalate doubt.");
       }
-
       setDoubt(payload.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to escalate doubt.");
@@ -122,36 +87,20 @@ export default function DoubtDetailPage() {
   };
 
   const submitMentorReply = async () => {
-    if (!doubt || !replyMessage.trim()) {
-      return;
-    }
-
+    if (!doubt || !replyMessage.trim()) return;
     setReplying(true);
     try {
       const response = await fetch("/api/mentor/reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          doubtId: doubt._id,
-          message: replyMessage,
-        }),
+        body: JSON.stringify({ doubtId: doubt._id, message: replyMessage }),
       });
       const payload = await response.json();
-
       if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-
-        if (response.status === 403) {
-          window.location.href = "/mentor";
-          return;
-        }
-
+        if (response.status === 401) { window.location.href = "/login"; return; }
+        if (response.status === 403) { window.location.href = "/mentor"; return; }
         throw new Error(payload.error ?? "Failed to send mentor reply.");
       }
-
       setDoubt(payload.data);
       setReplyMessage("");
     } catch (err) {
@@ -161,62 +110,53 @@ export default function DoubtDetailPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-panel">
-        <p className="text-slate-600">Loading doubt...</p>
-      </div>
-    );
-  }
+  /* State UI */
+  const StateCard = ({ children }: { children: React.ReactNode }) => (
+    <div className="rounded-2xl border border-brand-border bg-brand-surface p-8 shadow-panel">
+      {children}
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="rounded-3xl border border-coral/20 bg-white p-8 shadow-panel">
-        <p className="text-coral">{error}</p>
-      </div>
-    );
-  }
-
-  if (!doubt) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-panel">
-        <p className="text-slate-600">Doubt not found.</p>
-      </div>
-    );
-  }
+  if (loading) return <StateCard><p className="text-brand-neutral/70">Loading doubt...</p></StateCard>;
+  if (error)   return <StateCard><p className="text-brand-accent">{error}</p></StateCard>;
+  if (!doubt)  return <StateCard><p className="text-brand-neutral/70">Doubt not found.</p></StateCard>;
 
   const isMentor = user?.role === "mentor";
   const hasMentorReplies = (doubt.mentorReplies?.length ?? 0) > 0;
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-panel">
+      {/* Doubt header card */}
+      <div className="rounded-2xl border border-brand-border bg-brand-surface p-6 shadow-panel">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sea">
+            <p className="font-display text-xs font-semibold uppercase tracking-[0.32em] text-brand-accent">
               Doubt Detail
             </p>
-            <h2 className="mt-2 text-3xl font-semibold text-ink">{doubt.title}</h2>
+            <h2 className="font-display mt-2 text-2xl font-bold text-brand-text">
+              {doubt.title}
+            </h2>
           </div>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusTone(
-              doubt.status,
-            )}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusTone(doubt.status)}`}
           >
             {doubt.status.replace("_", " ")}
           </span>
         </div>
-        <p className="mt-4 whitespace-pre-wrap text-slate-700">{doubt.description}</p>
-        <p className="mt-4 text-xs text-slate-500">{formatDate(doubt.createdAt)}</p>
+        <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-brand-neutral/80">
+          {doubt.description}
+        </p>
+        <p className="mt-4 text-xs text-brand-neutral/50">{formatDate(doubt.createdAt)}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-panel">
+          {/* AI Answer */}
+          <div className="rounded-2xl border border-brand-border bg-brand-surface p-6 shadow-panel">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-xl font-semibold text-ink">AI Answer</h3>
+              <h3 className="font-display text-lg font-semibold text-brand-text">AI Answer</h3>
               {doubt.aiResponse?.confidenceScore !== undefined ? (
-                <span className="rounded-full bg-sea/10 px-3 py-1 text-xs font-semibold text-sea">
+                <span className="rounded-full border border-brand-success/30 bg-brand-success/10 px-3 py-1 text-xs font-semibold text-brand-success">
                   Confidence {(doubt.aiResponse.confidenceScore * 100).toFixed(1)}%
                 </span>
               ) : null}
@@ -224,7 +164,7 @@ export default function DoubtDetailPage() {
 
             {doubt.aiResponse ? (
               <>
-                <p className="mt-4 whitespace-pre-wrap leading-7 text-slate-700">
+                <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-brand-neutral/80">
                   {doubt.aiResponse.answer}
                 </p>
 
@@ -233,21 +173,21 @@ export default function DoubtDetailPage() {
                     <button
                       onClick={() => void submitFeedback(true)}
                       disabled={feedbackLoading}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-sea hover:text-sea disabled:cursor-not-allowed disabled:opacity-60"
+                      className="font-display rounded-full border border-brand-success/40 px-4 py-2 text-sm font-medium text-brand-success transition-colors duration-150 hover:bg-brand-success/10 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Helpful
                     </button>
                     <button
                       onClick={() => void submitFeedback(false)}
                       disabled={feedbackLoading}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-coral hover:text-coral disabled:cursor-not-allowed disabled:opacity-60"
+                      className="font-display rounded-full border border-brand-border px-4 py-2 text-sm font-medium text-brand-neutral/70 transition-colors duration-150 hover:border-brand-accent/40 hover:text-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Not helpful
                     </button>
                     <button
                       onClick={() => void escalate()}
                       disabled={escalating || doubt.status === "escalated" || doubt.status === "mentor_replied"}
-                      className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="font-display rounded-full border border-brand-link/40 px-4 py-2 text-sm font-medium text-brand-link transition-colors duration-150 hover:bg-brand-link/10 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {doubt.status === "mentor_replied"
                         ? "Mentor replied"
@@ -261,15 +201,20 @@ export default function DoubtDetailPage() {
                 ) : null}
               </>
             ) : (
-              <p className="mt-4 text-slate-600">No AI response stored for this doubt yet.</p>
+              <p className="mt-4 text-sm text-brand-neutral/60">
+                No AI response stored for this doubt yet.
+              </p>
             )}
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-panel">
+          {/* Mentor Conversation */}
+          <div className="rounded-2xl border border-brand-border bg-brand-surface p-6 shadow-panel">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-xl font-semibold text-ink">Mentor Conversation</h3>
+              <h3 className="font-display text-lg font-semibold text-brand-text">
+                Mentor Conversation
+              </h3>
               {hasMentorReplies ? (
-                <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                <span className="rounded-full border border-brand-link/30 bg-brand-link/10 px-3 py-1 text-xs font-semibold text-brand-link">
                   {doubt.mentorReplies?.length} repl{doubt.mentorReplies?.length === 1 ? "y" : "ies"}
                 </span>
               ) : null}
@@ -280,22 +225,24 @@ export default function DoubtDetailPage() {
                 {doubt.mentorReplies?.map((reply) => (
                   <div
                     key={reply._id}
-                    className="rounded-3xl border border-slate-200 bg-slate-50 p-4"
+                    className="rounded-xl border border-brand-border bg-brand-bg p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-ink">{reply.mentorName}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-display text-sm font-semibold text-brand-text">
+                        {reply.mentorName}
+                      </p>
+                      <p className="text-xs text-brand-neutral/50">
                         {formatDate(reply.createdAt)}
                       </p>
                     </div>
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-brand-neutral/80">
                       {reply.message}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-4 text-slate-600">
+              <p className="mt-4 text-sm text-brand-neutral/60">
                 {isMentor
                   ? "No mentor reply has been sent yet."
                   : "No mentor reply yet. If this doubt has been escalated, the mentor response will appear here."}
@@ -306,7 +253,7 @@ export default function DoubtDetailPage() {
               <div className="mt-6 space-y-3">
                 <label
                   htmlFor="mentor-reply"
-                  className="block text-sm font-medium text-slate-700"
+                  className="block text-sm font-medium text-brand-neutral/80"
                 >
                   Reply to the student
                 </label>
@@ -315,12 +262,12 @@ export default function DoubtDetailPage() {
                   value={replyMessage}
                   onChange={(event) => setReplyMessage(event.target.value)}
                   placeholder="Write a clear explanation, next step, or correction for the student."
-                  className="min-h-36 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-sea focus:bg-white"
+                  className="!min-h-36"
                 />
                 <button
                   onClick={() => void submitMentorReply()}
                   disabled={replying || !replyMessage.trim()}
-                  className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="font-display rounded-full bg-brand-accent px-5 py-2.5 text-sm font-semibold text-brand-bg transition-all duration-150 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {replying ? "Sending reply..." : "Send mentor reply"}
                 </button>

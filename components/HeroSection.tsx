@@ -8,24 +8,18 @@ const features = [
     title: "RAG-Powered",
     description:
       "Retrieval-augmented answers grounded in your actual course material.",
-    color: "bg-sea/10 text-sea border-sea/20",
-    dot: "bg-sea",
   },
   {
     icon: "🤖",
     title: "AI Tutor",
     description:
       "GPT-4o-mini explains concepts clearly, concisely, and accurately.",
-    color: "bg-sun/10 text-sun border-sun/20",
-    dot: "bg-sun",
   },
   {
     icon: "🧑‍🏫",
     title: "Mentor Fallback",
     description:
       "Low-confidence answers are automatically escalated to a real mentor.",
-    color: "bg-coral/10 text-coral border-coral/20",
-    dot: "bg-coral",
   },
 ];
 
@@ -46,52 +40,50 @@ export function HeroSection() {
 
   return (
     <div className="relative flex min-h-[calc(100vh-73px)] flex-col items-center justify-center overflow-hidden px-4 py-16">
-      {/* Decorative background glows */}
+      {/* Subtle ambient glow — brand-accent only, very low opacity */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-sea/10 blur-[120px]" />
-        <div className="absolute -right-40 top-20 h-[400px] w-[400px] rounded-full bg-sun/10 blur-[100px]" />
-        <div className="absolute bottom-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 rounded-full bg-sea/5 blur-[80px]" />
+        <div className="absolute -left-60 -top-60 h-[600px] w-[600px] rounded-full bg-brand-accent/5 blur-[140px]" />
+        <div className="absolute -right-60 bottom-0 h-[500px] w-[500px] rounded-full bg-brand-link/4 blur-[120px]" />
       </div>
 
       {/* Hero content */}
       <div className="relative z-10 mx-auto max-w-4xl text-center">
-        {/* Eyebrow */}
-        <div className="inline-flex animate-fade-in items-center gap-2 rounded-full border border-sea/20 bg-sea/5 px-4 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-sea" />
-          <span className="text-xs font-semibold uppercase tracking-[0.25em] text-sea">
+        {/* Eyebrow badge */}
+        <div className="inline-flex animate-fade-in items-center gap-2 rounded-full border border-brand-accent/25 bg-brand-accent/8 px-4 py-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+          <span className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-brand-accent">
             Powered by RAG + GPT-4o
           </span>
         </div>
 
         {/* Headline */}
-        <h2 className="mt-6 animate-fade-in-up text-4xl font-bold leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
+        <h2 className="font-display mt-6 animate-fade-in-up text-4xl font-bold leading-tight tracking-tight text-brand-text sm:text-5xl lg:text-6xl">
           AI Doubt Solver for{" "}
-          <span className="bg-gradient-to-r from-sea to-teal-400 bg-clip-text text-transparent">
-            Smarter Learning
-          </span>
+          <span className="text-brand-accent">Smarter Learning</span>
         </h2>
 
         {/* Subtext */}
         <p
-          className="mx-auto mt-5 max-w-xl animate-fade-in-up text-lg leading-relaxed text-slate-600"
+          className="mx-auto mt-5 max-w-xl animate-fade-in-up text-base leading-relaxed text-brand-neutral/70"
           style={{ animationDelay: "0.1s" }}
         >
           Ask any doubt and get instant, context-aware answers powered by AI —
           grounded in your course material and backed by real mentors.
         </p>
 
-        {/* CTA */}
+        {/* CTAs */}
         <div
           className="mt-8 flex animate-fade-in-up flex-wrap items-center justify-center gap-4"
           style={{ animationDelay: "0.2s" }}
         >
+          {/* Primary CTA */}
           <button
             onClick={openWidget}
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
+            className="font-display group inline-flex items-center gap-2 rounded-full bg-brand-accent px-7 py-3.5 text-sm font-semibold text-brand-bg transition-all duration-200 hover:brightness-110 active:scale-95"
           >
             <span>Start Asking Doubts</span>
             <svg
-              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -104,9 +96,11 @@ export function HeroSection() {
               />
             </svg>
           </button>
+
+          {/* Secondary CTA */}
           <a
             href="/doubts"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:border-sea hover:text-sea"
+            className="font-display inline-flex items-center gap-2 rounded-full border border-brand-link px-6 py-3.5 text-sm font-medium text-brand-link transition-all duration-200 hover:bg-brand-link/10"
           >
             View My Doubts
           </a>
@@ -120,16 +114,15 @@ export function HeroSection() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className={`rounded-2xl border bg-white/80 p-5 text-left shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:shadow-panel ${feature.color}`}
+              className="rounded-2xl border border-brand-border bg-brand-surface p-5 text-left transition-all duration-200 hover:-translate-y-1"
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{feature.icon}</span>
-                <div className="flex items-center gap-2">
-                  <span className={`h-1.5 w-1.5 rounded-full ${feature.dot}`} />
-                  <h3 className="font-semibold text-ink">{feature.title}</h3>
-                </div>
+                <h3 className="font-display font-semibold text-brand-text">
+                  {feature.title}
+                </h3>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              <p className="mt-3 text-sm leading-relaxed text-brand-neutral/70">
                 {feature.description}
               </p>
             </div>
@@ -141,60 +134,54 @@ export function HeroSection() {
           className="mx-auto mt-14 max-w-md animate-fade-in-up"
           style={{ animationDelay: "0.4s" }}
         >
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+          <p className="font-display mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-brand-neutral/50">
             Preview
           </p>
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-panel">
-            {/* Mock widget header */}
-            <div className="flex items-center gap-3 border-b border-slate-100 bg-ink px-5 py-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sea text-xs font-bold text-white">
-                AI
+          <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-card">
+            {/* Widget header */}
+            <div className="flex items-center gap-3 border-b border-brand-border bg-brand-bg px-5 py-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-accent/15 border border-brand-accent/30">
+                <span className="font-display text-xs font-bold text-brand-accent">AI</span>
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold text-white">AI Tutor</p>
-                <p className="text-xs text-white/60">Grounded answers in seconds</p>
+                <p className="font-display text-sm font-semibold text-brand-text">AI Tutor</p>
+                <p className="text-xs text-brand-neutral/50">Grounded answers in seconds</p>
               </div>
               <div className="ml-auto flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-coral/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-sun/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-sea/80" />
+                <span className="h-2 w-2 rounded-full bg-brand-neutral/20" />
+                <span className="h-2 w-2 rounded-full bg-brand-neutral/20" />
+                <span className="h-2 w-2 rounded-full bg-brand-neutral/20" />
               </div>
             </div>
 
-            {/* Mock messages */}
+            {/* Messages */}
             <div className="space-y-3 p-4">
               {mockMessages.map((message, index) => (
                 <div
                   key={index}
-                  className={`rounded-2xl p-4 text-left ${
+                  className={`rounded-xl p-4 text-left ${
                     message.role === "student"
-                      ? "bg-slate-50"
-                      : "bg-ink text-white"
+                      ? "bg-brand-bg border border-brand-border"
+                      : "bg-brand-accent/10 border border-brand-accent/20"
                   }`}
                 >
                   <div className="mb-1.5 flex items-center justify-between">
                     <span
-                      className={`text-xs font-semibold uppercase tracking-wider ${
+                      className={`font-display text-xs font-semibold uppercase tracking-wider ${
                         message.role === "student"
-                          ? "text-sea"
-                          : "text-white/60"
+                          ? "text-brand-link"
+                          : "text-brand-accent"
                       }`}
                     >
                       {message.role === "student" ? "Student" : "AI Tutor"}
                     </span>
                     {message.role === "ai" && message.confidence && (
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/80">
+                      <span className="rounded-full border border-brand-success/30 bg-brand-success/10 px-2 py-0.5 text-xs font-semibold text-brand-success">
                         {message.confidence}% confidence
                       </span>
                     )}
                   </div>
-                  <p
-                    className={`text-sm leading-relaxed ${
-                      message.role === "student"
-                        ? "text-slate-700"
-                        : "text-slate-200"
-                    }`}
-                  >
+                  <p className="text-sm leading-relaxed text-brand-neutral/80">
                     {message.text}
                   </p>
                 </div>
@@ -202,14 +189,14 @@ export function HeroSection() {
             </div>
 
             {/* Mock input */}
-            <div className="border-t border-slate-100 px-4 py-3">
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-2.5">
-                <span className="flex-1 text-sm text-slate-400">
+            <div className="border-t border-brand-border px-4 py-3">
+              <div className="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-bg px-4 py-2.5">
+                <span className="flex-1 text-sm text-brand-neutral/40">
                   Ask a doubt...
                 </span>
                 <button
                   onClick={openWidget}
-                  className="rounded-lg bg-sea px-3 py-1 text-xs font-semibold text-white transition hover:bg-teal-700"
+                  className="font-display rounded-lg bg-brand-accent px-3 py-1 text-xs font-semibold text-brand-bg transition-all duration-150 hover:brightness-110"
                 >
                   Ask
                 </button>

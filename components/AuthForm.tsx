@@ -56,37 +56,44 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md rounded-[2rem] border border-slate-200 bg-white p-8 shadow-panel">
-      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sea">
+    <div className="w-full max-w-md rounded-2xl border border-brand-border bg-brand-surface p-8 shadow-card">
+      {/* Eyebrow */}
+      <p className="font-display text-xs font-semibold uppercase tracking-[0.32em] text-brand-accent">
         {isSignup ? "Create Account" : "Welcome Back"}
       </p>
-      <h1 className="mt-2 text-3xl font-semibold text-ink">
+
+      {/* Heading */}
+      <h1 className="font-display mt-2 text-3xl font-bold text-brand-text">
         {isSignup ? "Join the learning hub" : "Log in to continue"}
       </h1>
-      <p className="mt-3 text-sm leading-6 text-slate-600">
+
+      {/* Description */}
+      <p className="mt-3 text-sm leading-6 text-brand-neutral/70">
         {isSignup
           ? "Create a student or mentor account to use the doubt resolution workflow."
           : "Access your doubts, AI answers, and mentor workflow securely."}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {/* Name */}
         {isSignup ? (
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="name">
+            <label className="mb-2 block text-sm font-medium text-brand-neutral/80" htmlFor="name">
               Full name
             </label>
             <input
               id="name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-sea focus:bg-white"
+              placeholder="Jane Doe"
               required
             />
           </div>
         ) : null}
 
+        {/* Email */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="email">
+          <label className="mb-2 block text-sm font-medium text-brand-neutral/80" htmlFor="email">
             Email
           </label>
           <input
@@ -94,16 +101,14 @@ export function AuthForm({ mode }: AuthFormProps) {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-sea focus:bg-white"
+            placeholder="you@example.com"
             required
           />
         </div>
 
+        {/* Password */}
         <div>
-          <label
-            className="mb-2 block text-sm font-medium text-slate-700"
-            htmlFor="password"
-          >
+          <label className="mb-2 block text-sm font-medium text-brand-neutral/80" htmlFor="password">
             Password
           </label>
           <input
@@ -111,22 +116,22 @@ export function AuthForm({ mode }: AuthFormProps) {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-sea focus:bg-white"
+            placeholder="Min. 8 characters"
             required
             minLength={8}
           />
         </div>
 
+        {/* Role */}
         {isSignup ? (
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="role">
+            <label className="mb-2 block text-sm font-medium text-brand-neutral/80" htmlFor="role">
               Role
             </label>
             <select
               id="role"
               value={role}
               onChange={(event) => setRole(event.target.value as UserRole)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-sea focus:bg-white"
             >
               <option value="student">Student</option>
               <option value="mentor">Mentor</option>
@@ -134,12 +139,18 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
         ) : null}
 
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {/* Error */}
+        {error ? (
+          <p className="rounded-lg border border-brand-accent/30 bg-brand-accent/10 px-4 py-2.5 text-sm text-brand-accent">
+            {error}
+          </p>
+        ) : null}
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="font-display w-full rounded-xl bg-brand-accent px-5 py-3 text-sm font-semibold text-brand-bg transition-all duration-150 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading
             ? isSignup
@@ -151,11 +162,11 @@ export function AuthForm({ mode }: AuthFormProps) {
         </button>
       </form>
 
-      <p className="mt-6 text-sm text-slate-600">
+      <p className="mt-6 text-sm text-brand-neutral/60">
         {isSignup ? "Already have an account?" : "Need an account?"}{" "}
         <Link
           href={isSignup ? ("/login" as Route) : ("/signup" as Route)}
-          className="font-semibold text-sea hover:text-ink"
+          className="font-medium text-brand-link underline-offset-2 hover:underline"
         >
           {isSignup ? "Log in" : "Sign up"}
         </Link>

@@ -10,27 +10,33 @@ export function RecommendationList({
   title = "Recommended Resources",
 }: RecommendationListProps) {
   return (
-    <aside className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-panel">
-      <h3 className="text-xl font-semibold text-ink">{title}</h3>
+    <aside className="rounded-2xl border border-brand-border bg-brand-surface p-6 shadow-card">
+      {title ? (
+        <h3 className="font-display text-lg font-semibold text-brand-text">
+          {title}
+        </h3>
+      ) : null}
       {resources.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-600">
+        <p className="mt-4 text-sm text-brand-neutral/60">
           No semantic matches yet. Add content records and embeddings to Qdrant to
           power recommendations.
         </p>
       ) : (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           {resources.map((resource) => (
             <article
               key={resource.embeddingId}
-              className="rounded-3xl border border-slate-200 bg-slate-50 p-4"
+              className="rounded-xl border border-brand-border bg-brand-bg p-4 transition-colors duration-150 hover:border-brand-accent/30"
             >
               <div className="flex items-start justify-between gap-3">
-                <h4 className="font-semibold text-ink">{resource.title}</h4>
-                <span className="rounded-full bg-sea/10 px-3 py-1 text-xs font-semibold text-sea">
+                <h4 className="font-display font-semibold text-brand-text">
+                  {resource.title}
+                </h4>
+                <span className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
                   {(resource.score * 100).toFixed(1)}%
                 </span>
               </div>
-              <p className="mt-2 line-clamp-4 text-sm leading-6 text-slate-600">
+              <p className="mt-2 line-clamp-4 text-sm leading-6 text-brand-neutral/70">
                 {resource.content}
               </p>
               {resource.tags.length > 0 ? (
@@ -38,7 +44,7 @@ export function RecommendationList({
                   {resource.tags.map((tag) => (
                     <span
                       key={`${resource.embeddingId}-${tag}`}
-                      className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600"
+                      className="rounded-full border border-brand-border px-2.5 py-0.5 text-xs text-brand-neutral/70"
                     >
                       {tag}
                     </span>

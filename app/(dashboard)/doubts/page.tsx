@@ -36,51 +36,59 @@ export default function DoubtsPage() {
     void loadDoubts();
   }, []);
 
+  const StateCard = ({ children }: { children: React.ReactNode }) => (
+    <div className="rounded-2xl border border-brand-border bg-brand-surface p-8 shadow-panel">
+      {children}
+    </div>
+  );
+
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sea">
+        <p className="font-display text-xs font-semibold uppercase tracking-[0.32em] text-brand-accent">
           Doubt History
         </p>
-        <h2 className="mt-2 text-3xl font-semibold text-ink">Your submitted doubts</h2>
+        <h2 className="font-display mt-2 text-3xl font-bold text-brand-text">
+          Your submitted doubts
+        </h2>
       </div>
 
       {loading ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-panel">
-          <p className="text-slate-600">Loading your doubts...</p>
-        </div>
+        <StateCard>
+          <p className="text-brand-neutral/70">Loading your doubts...</p>
+        </StateCard>
       ) : error ? (
-        <div className="rounded-3xl border border-coral/20 bg-white p-8 shadow-panel">
-          <p className="text-coral">{error}</p>
-        </div>
+        <StateCard>
+          <p className="text-brand-accent">{error}</p>
+        </StateCard>
       ) : doubts.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-panel">
-          <p className="text-slate-600">No doubts submitted yet.</p>
-        </div>
+        <StateCard>
+          <p className="text-brand-neutral/70">No doubts submitted yet.</p>
+        </StateCard>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {doubts.map((doubt) => (
             <Link
               key={doubt._id}
               href={`/doubts/${doubt._id}` as Route}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-panel transition-transform hover:-translate-y-0.5"
+              className="block rounded-2xl border border-brand-border bg-brand-surface p-6 shadow-panel transition-all duration-150 hover:border-brand-accent/30 hover:-translate-y-0.5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-ink">{doubt.title}</h3>
-                  <p className="line-clamp-2 text-sm text-slate-600">
+                <div className="space-y-1.5">
+                  <h3 className="font-display text-base font-semibold text-brand-text">
+                    {doubt.title}
+                  </h3>
+                  <p className="line-clamp-2 text-sm text-brand-neutral/70">
                     {doubt.description}
                   </p>
                 </div>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusTone(
-                    doubt.status,
-                  )}`}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusTone(doubt.status)}`}
                 >
                   {doubt.status}
                 </span>
               </div>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-brand-neutral/50">
                 <span>{formatDate(doubt.createdAt)}</span>
                 {doubt.aiResponse?.confidenceScore !== undefined ? (
                   <span>

@@ -8,20 +8,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0f172a",
-        mist: "#f8fafc",
-        sea: "#0f766e",
-        sun: "#f59e0b",
-        coral: "#ef4444",
+        brand: {
+          bg: "#050813",
+          text: "#F9FAFB",
+          accent: "#CB7BB9",
+          neutral: "#F1F1F8",
+          link: "#7DD3FC",
+          success: "#4ADE80",
+          surface: "#0c0f1d",
+          border: "rgba(241, 241, 248, 0.10)",
+        }
       },
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Roboto", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["'Elms Sans'", "Roboto", "ui-sans-serif", "sans-serif"],
       },
       boxShadow: {
-        panel: "0 20px 60px rgba(15, 23, 42, 0.12)",
+        panel: "0 1px 3px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(241, 241, 248, 0.08)",
+        card: "0 4px 24px rgba(0, 0, 0, 0.4)",
       },
       backgroundImage: {
-        grid: "linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px)",
+        grid: "linear-gradient(rgba(241, 241, 248, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(241, 241, 248, 0.025) 1px, transparent 1px)",
       },
     },
   },

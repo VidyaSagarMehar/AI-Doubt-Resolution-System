@@ -14,7 +14,7 @@ export default function MentorPage() {
   useEffect(() => {
     const loadEscalatedDoubts = async () => {
       try {
-        const response = await fetch("/api/doubts");
+        const response = await fetch("/api/doubts?status=escalated");
         const payload = await response.json();
 
         if (!response.ok) {
@@ -30,12 +30,7 @@ export default function MentorPage() {
           throw new Error(payload.error ?? "Failed to load escalated doubts.");
         }
 
-        const mentorQueue = (payload.data ?? []).filter(
-          (doubt: DoubtDetail) =>
-            doubt.status === "escalated" || doubt.status === "mentor_replied",
-        );
-
-        setDoubts(mentorQueue);
+        setDoubts(payload.data ?? []);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load escalated doubts.",
@@ -48,55 +43,57 @@ export default function MentorPage() {
     void loadEscalatedDoubts();
   }, []);
 
+  const StateCard = ({ children }: { children: React.ReactNode }) => (
+    <div className="rounded-2xl border border-brand-border bg-brand-surface p-8 shadow-panel">
+      {children}
+    </div>
+  );
+
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sea">
+        <p className="font-display text-xs font-semibold uppercase tracking-[0.32em] text-brand-accent">
           Mentor Workspace
         </p>
-        <h2 className="mt-2 text-3xl font-semibold text-ink">
+        <h2 className="font-display mt-2 text-3xl font-bold text-brand-text">
           Escalated doubts needing support
         </h2>
       </div>
 
       {loading ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-panel">
-          <p className="text-slate-600">Loading mentor queue...</p>
-        </div>
+        <StateCard>
+          <p className="text-brand-neutral/70">Loading mentor queue...</p>
+        </StateCard>
       ) : error ? (
-        <div className="rounded-3xl border border-coral/20 bg-white p-8 shadow-panel">
-          <p className="text-coral">{error}</p>
-        </div>
+        <StateCard>
+          <p className="text-brand-accent">{error}</p>
+        </StateCard>
       ) : doubts.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-panel">
-          <p className="text-slate-600">No escalated doubts right now.</p>
-        </div>
+        <StateCard>
+          <p className="text-brand-neutral/70">No escalated doubts right now.</p>
+        </StateCard>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {doubts.map((doubt) => (
             <Link
               key={doubt._id}
               href={`/doubts/${doubt._id}` as Route}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-panel"
+              className="block rounded-2xl border border-brand-border bg-brand-surface p-6 shadow-panel transition-all duration-150 hover:border-brand-accent/30 hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-ink">{doubt.title}</h3>
-                  <p className="mt-2 line-clamp-3 text-sm text-slate-600">
+                  <h3 className="font-display text-base font-semibold text-brand-text">
+                    {doubt.title}
+                  </h3>
+                  <p className="mt-1.5 line-clamp-3 text-sm text-brand-neutral/70">
                     {doubt.description}
                   </p>
                 </div>
-                <div
-                  className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
-                    doubt.status === "mentor_replied"
-                      ? "bg-sky-100 text-sky-700"
-                      : "bg-sun/10 text-sun"
-                  }`}
-                >
-                  {doubt.status === "mentor_replied" ? "Replied" : "Escalated"}
+                <div className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-accent">
+                  Escalated
                 </div>
               </div>
-              <div className="mt-4 text-xs text-slate-500">
+              <div className="mt-4 text-xs text-brand-neutral/50">
                 Submitted {formatDate(doubt.createdAt)}
               </div>
             </Link>

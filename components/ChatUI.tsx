@@ -2,12 +2,17 @@
 
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { RecommendationList } from "@/components/RecommendationList";
 import type { AIResponsePayload, DoubtDetail } from "@/types";
 
-export function ChatUI() {
+type ChatUIProps = {
+  mode?: "page" | "widget";
+  onClose?: () => void;
+};
+
+export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [title, setTitle] = useState("");
@@ -18,6 +23,14 @@ export function ChatUI() {
     doubt: DoubtDetail;
     aiResponse: AIResponsePayload;
   } | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to result in widget mode
+  useEffect(() => {
+    if (result && mode === "widget" && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result, mode]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -29,10 +42,7 @@ export function ChatUI() {
       const doubtResponse = await fetch("/api/doubts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-        }),
+        body: JSON.stringify({ title, description }),
       });
       const doubtPayload = await doubtResponse.json();
 
@@ -53,10 +63,7 @@ export function ChatUI() {
         throw new Error(aiPayload.error ?? "Failed to generate AI answer.");
       }
 
-      setResult({
-        doubt,
-        aiResponse: aiPayload.data,
-      });
+      setResult({ doubt, aiResponse: aiPayload.data });
       setTitle("");
       setDescription("");
       router.refresh();
@@ -67,6 +74,174 @@ export function ChatUI() {
     }
   };
 
+  // ─── Widget mode (compact single-column) ──────────────────────────────
+  if (mode === "widget") {
+    return (
+      <div className="flex flex-col gap-5">
+        {/* Input form */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          {user ? (
+            <p className="mb-3 text-xs text-slate-500">
+              Signed in as{" "}
+              <span className="font-semibold text-ink">{user.name}</span>
+            </p>
+          ) : null}
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label
+                htmlFor="widget-title"
+                className="mb-1 block text-xs font-medium text-slate-600"
+              >
+                Doubt title
+              </label>
+              <input
+                id="widget-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Why does binary search need sorted input?"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-sea focus:bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="widget-description"
+                className="mb-1 block text-xs font-medium text-slate-600"
+              >
+                Describe your doubt
+              </label>
+              <textarea
+                id="widget-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Write your full question, what you tried, and where you got stuck."
+                className="min-h-24 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-sea focus:bg-white"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || authLoading || !user}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                  Generating answer…
+                </>
+              ) : authLoading ? (
+                "Loading session…"
+              ) : (
+                "Ask AI Tutor"
+              )}
+            </button>
+          </form>
+
+          {error ? (
+            <p className="mt-2 text-xs text-coral">{error}</p>
+          ) : null}
+        </div>
+
+        {/* Result */}
+        {result ? (
+          <div ref={resultRef} className="space-y-3">
+            {/* Question recap */}
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-sea">
+                Student
+              </p>
+              <p className="mt-1.5 text-sm font-medium text-ink">
+                {result.doubt.title}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-slate-600">
+                {result.doubt.description}
+              </p>
+            </div>
+
+            {/* AI answer */}
+            <div className="rounded-2xl bg-ink p-4 text-white">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
+                  AI Tutor
+                </p>
+                <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold">
+                  {(result.aiResponse.confidenceScore).toFixed(1)}% confidence
+                </span>
+              </div>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-200">
+                {result.aiResponse.answer}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  router.push(`/doubts/${result.doubt._id}` as Route);
+                  onClose?.();
+                }}
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-sea hover:text-sea"
+              >
+                Open full thread →
+              </button>
+            </div>
+
+            {/* Recommendations — collapsible to save space */}
+            {result.aiResponse.recommendedResources.length > 0 ? (
+              <details className="rounded-2xl border border-slate-200 bg-white">
+                <summary className="cursor-pointer select-none px-4 py-3 text-xs font-semibold text-slate-600">
+                  📚 {result.aiResponse.recommendedResources.length} Recommended
+                  Resources
+                </summary>
+                <div className="border-t border-slate-100 px-4 pb-4 pt-3">
+                  <RecommendationList
+                    resources={result.aiResponse.recommendedResources}
+                    title=""
+                  />
+                </div>
+              </details>
+            ) : null}
+          </div>
+        ) : !loading ? (
+          /* Empty state */
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sea/10 text-2xl">
+              💬
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-ink">
+                Ask your first doubt
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Fill in the form above and hit <strong>Ask AI Tutor</strong>.
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  // ─── Page mode (original two-column layout) ───────────────────────────
   return (
     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
       <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-panel">

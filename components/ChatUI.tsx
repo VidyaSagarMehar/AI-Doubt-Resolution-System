@@ -3,17 +3,13 @@
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { RecommendationList } from "@/components/RecommendationList";
 import type { AIResponsePayload, DoubtDetail } from "@/types";
 
-const defaultUser = {
-  name: "Demo Student",
-  email: "student@houseofedtech.dev",
-  role: "student",
-} as const;
-
 export function ChatUI() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +32,6 @@ export function ChatUI() {
         body: JSON.stringify({
           title,
           description,
-          user: defaultUser,
         }),
       });
       const doubtPayload = await doubtResponse.json();
@@ -83,6 +78,11 @@ export function ChatUI() {
             <div>
               <p className="text-sm text-slate-500">Student question</p>
               <h3 className="text-xl font-semibold text-ink">Ask your doubt</h3>
+              {user ? (
+                <p className="mt-1 text-sm text-slate-500">
+                  Signed in as {user.name} ({user.email})
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -121,10 +121,14 @@ export function ChatUI() {
             </div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || authLoading || !user}
               className="inline-flex rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Generating answer..." : "Ask AI Tutor"}
+              {loading
+                ? "Generating answer..."
+                : authLoading
+                  ? "Loading session..."
+                  : "Ask AI Tutor"}
             </button>
           </form>
           {error ? <p className="text-sm text-coral">{error}</p> : null}

@@ -11,22 +11,6 @@ import type {
   UpdateDoubtInput,
 } from "@/types";
 
-async function getOrCreateUser(input: CreateDoubtInput["user"]) {
-  const normalizedEmail = input.email.trim().toLowerCase();
-
-  let user = await User.findOne({ email: normalizedEmail });
-
-  if (!user) {
-    user = await User.create({
-      name: input.name,
-      email: normalizedEmail,
-      role: input.role ?? "student",
-    });
-  }
-
-  return user;
-}
-
 export async function createDoubt(input: CreateDoubtInput) {
   await connectToDatabase();
 
@@ -34,11 +18,14 @@ export async function createDoubt(input: CreateDoubtInput) {
     throw new Error("Title and description are required.");
   }
 
-  if (!input.user?.email || !input.user?.name) {
-    throw new Error("User details are required.");
+  if (!Types.ObjectId.isValid(input.userId)) {
+    throw new Error("Valid userId is required.");
   }
 
-  const user = await getOrCreateUser(input.user);
+  const user = await User.findById(input.userId);
+  if (!user) {
+    throw new Error("User not found.");
+  }
 
   const doubt = await Doubt.create({
     userId: user._id,
@@ -62,6 +49,14 @@ export async function listDoubts(filters: ListDoubtsFilters = {}) {
   if (filters.userEmail) {
     const user = await User.findOne({ email: filters.userEmail.toLowerCase() });
     query.userId = user?._id ?? new Types.ObjectId();
+  }
+
+  if (filters.userId) {
+    if (!Types.ObjectId.isValid(filters.userId)) {
+      throw new Error("Invalid user id.");
+    }
+
+    query.userId = new Types.ObjectId(filters.userId);
   }
 
   const doubts = await Doubt.find(query).sort({ createdAt: -1 }).lean();
@@ -104,6 +99,25 @@ export async function getDoubtById(id: string) {
     aiResponse: aiResponse ? serializeDocument(aiResponse) : null,
     feedback: feedback.map((item) => serializeDocument(item)),
   };
+}
+
+export async function canAccessDoubt(doubtId: string, userId: string, role: string) {
+  await connectToDatabase();
+
+  if (!Types.ObjectId.isValid(doubtId) || !Types.ObjectId.isValid(userId)) {
+    return false;
+  }
+
+  if (role === "mentor") {
+    return true;
+  }
+
+  const doubt = await Doubt.findOne({
+    _id: doubtId,
+    userId: new Types.ObjectId(userId),
+  }).lean();
+
+  return Boolean(doubt);
 }
 
 export async function updateDoubtById(id: string, input: UpdateDoubtInput) {

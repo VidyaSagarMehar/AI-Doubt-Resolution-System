@@ -3,5 +3,9 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6">
+      {children}
+    </div>
+  );
 }

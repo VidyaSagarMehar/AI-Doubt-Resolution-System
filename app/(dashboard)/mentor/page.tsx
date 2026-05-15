@@ -18,6 +18,15 @@ export default function MentorPage() {
         const payload = await response.json();
 
         if (!response.ok) {
+          if (response.status === 401) {
+            window.location.href = "/login";
+            return;
+          }
+
+          if (response.status === 403) {
+            window.location.href = "/ask";
+            return;
+          }
           throw new Error(payload.error ?? "Failed to load escalated doubts.");
         }
 

@@ -1,5 +1,12 @@
 export type DoubtStatus = "open" | "resolved" | "escalated";
-export type UserRole = "student" | "mentor" | "admin";
+export type UserRole = "student" | "mentor";
+
+export type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+};
 
 export type RecommendedResource = {
   title: string;
@@ -44,11 +51,7 @@ export type DoubtDetail = {
 export type CreateDoubtInput = {
   title: string;
   description: string;
-  user: {
-    name: string;
-    email: string;
-    role?: UserRole;
-  };
+  userId: string;
 };
 
 export type UpdateDoubtInput = {
@@ -66,4 +69,5 @@ export type FeedbackInput = {
 export type ListDoubtsFilters = {
   status?: string;
   userEmail?: string;
+  userId?: string;
 };

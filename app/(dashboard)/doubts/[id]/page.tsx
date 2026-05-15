@@ -21,6 +21,16 @@ export default function DoubtDetailPage() {
         const payload = await response.json();
 
         if (!response.ok) {
+          if (response.status === 401) {
+            window.location.href = "/login";
+            return;
+          }
+
+          if (response.status === 403) {
+            window.location.href = "/doubts";
+            return;
+          }
+
           throw new Error(payload.error ?? "Failed to load doubt.");
         }
 
@@ -52,6 +62,16 @@ export default function DoubtDetailPage() {
       const payload = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+
+        if (response.status === 403) {
+          window.location.href = "/doubts";
+          return;
+        }
+
         throw new Error(payload.error ?? "Failed to submit feedback.");
       }
     } catch (err) {
@@ -76,6 +96,16 @@ export default function DoubtDetailPage() {
       const payload = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+
+        if (response.status === 403) {
+          window.location.href = "/doubts";
+          return;
+        }
+
         throw new Error(payload.error ?? "Failed to escalate doubt.");
       }
 
@@ -156,14 +186,14 @@ export default function DoubtDetailPage() {
                   disabled={feedbackLoading}
                   className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-sea hover:text-sea disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  👍 Helpful
+                  Helpful
                 </button>
                 <button
                   onClick={() => void submitFeedback(false)}
                   disabled={feedbackLoading}
                   className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-coral hover:text-coral disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  👎 Not helpful
+                  Not helpful
                 </button>
                 <button
                   onClick={() => void escalate()}

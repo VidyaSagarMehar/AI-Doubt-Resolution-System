@@ -14,9 +14,12 @@ import {
 } from "@/lib/qdrant";
 import type { RecommendedResource } from "@/types";
 
+const RAG_CONFIDENCE_THRESHOLD = 0.45;
+
 export async function generateAIResponseForDoubt(doubtId: string) {
   await connectToDatabase();
   await ensureQdrantCollection();
+
   const openai = getOpenAIClient();
 
   const doubt = await Doubt.findById(doubtId).lean();
@@ -26,68 +29,171 @@ export async function generateAIResponseForDoubt(doubtId: string) {
   }
 
   const queryText = `${doubt.title}\n\n${doubt.description}`;
+
+  // =========================================================
+  // Create Query Embedding
+  // =========================================================
+
   const queryEmbedding = await createEmbedding(queryText);
+
+  // =========================================================
+  // Retrieve Similar Documents
+  // =========================================================
+
   const similarDocuments = await searchSimilarContent(queryEmbedding);
+
+  const confidenceScore = similarDocuments[0]?.score ?? 0;
+
+  const hasStrongContext =
+    similarDocuments.length > 0 &&
+    confidenceScore >= RAG_CONFIDENCE_THRESHOLD;
+
+  // =========================================================
+  // Build Context Blocks
+  // =========================================================
+
   const contextBlocks = similarDocuments
     .map(
       (document, index) =>
-        `Source ${index + 1}: ${document.title}\nTags: ${document.tags.join(", ") || "none"}\nContent: ${document.content}`,
+        `Source ${index + 1}: ${document.title}
+Tags: ${document.tags.join(", ") || "none"}
+Content: ${document.content}`,
     )
     .join("\n\n");
 
-  const prompt = [
-    "You are an expert tutor. Use ONLY the below context to answer.",
-    "If unsure, say you don't know.",
-    "",
-    "Context:",
-    contextBlocks || "No relevant context was found.",
-    "",
-    `Question: ${queryText}`,
-  ].join("\n");
+  // =========================================================
+  // Dynamic Prompting
+  // =========================================================
+
+  const answerSource: "rag" | "fallback" = hasStrongContext
+    ? "rag"
+    : "fallback";
+
+  const systemPrompt = hasStrongContext
+    ? `
+You are an expert AI tutor.
+
+Use the retrieved study material to answer the student's question accurately.
+
+Rules:
+- Prioritize retrieved study content
+- Keep answers educational and concise
+- If context contains the answer, do not hallucinate
+- Explain concepts clearly
+`
+    : `
+You are an expert AI tutor.
+
+No strong study material was found.
+
+Answer using your general technical knowledge in a clear and educational way.
+
+Rules:
+- Be accurate
+- Explain concepts simply
+- Mention that the answer is based on general AI knowledge
+`;
+
+  const userPrompt = hasStrongContext
+    ? `
+Retrieved Study Material:
+
+${contextBlocks}
+
+Student Question:
+${queryText}
+`
+    : `
+Student Question:
+${queryText}
+`;
+
+  // =========================================================
+  // Generate AI Response
+  // =========================================================
 
   const completion = await openai.chat.completions.create({
     model: OPENAI_CHAT_MODEL,
-    temperature: 0.2,
+    temperature: hasStrongContext ? 0.2 : 0.4,
     messages: [
       {
         role: "system",
-        content:
-          "You are an expert tutor that answers only from retrieved study content.",
+        content: systemPrompt,
       },
       {
         role: "user",
-        content: prompt,
+        content: userPrompt,
       },
     ],
   });
 
-  const answer =
+  const generatedAnswer =
     completion.choices[0]?.message?.content?.trim() ??
-    "I don't know based on the available context.";
-  const confidenceScore = similarDocuments[0]?.score ?? 0;
+    "I couldn't generate a helpful response.";
+
+  // =========================================================
+  // Final Answer Formatting
+  // =========================================================
+
+  const answer = hasStrongContext
+    ? generatedAnswer
+    : `No exact course material was found for this topic.
+
+Here is a general explanation:
+
+${generatedAnswer}`;
+
+  // =========================================================
+  // Recommended Resources
+  // =========================================================
+
   const recommendedResources = similarDocuments.slice(0, 3);
+
+  // =========================================================
+  // Store Response
+  // =========================================================
 
   const storedResponse = await AIResponse.findOneAndUpdate(
     { doubtId: doubt._id },
     {
       doubtId: doubt._id,
       answer,
+      answerSource,
       sources: similarDocuments,
-      confidenceScore,
+      confidenceScore: Number((confidenceScore * 100).toFixed(2)),
       recommendedResources,
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    },
   ).lean();
 
-  if (answer && confidenceScore >= 0.25 && doubt.status !== "escalated") {
-    await Doubt.findByIdAndUpdate(doubt._id, { status: "resolved" });
+  // =========================================================
+  // Update Doubt Status
+  // =========================================================
+
+  if (
+    generatedAnswer &&
+    confidenceScore >= 0.25 &&
+    doubt.status !== "escalated"
+  ) {
+    await Doubt.findByIdAndUpdate(doubt._id, {
+      status: "resolved",
+    });
   }
 
   return serializeDocument(storedResponse);
 }
 
+// =========================================================
+// Create Embedding
+// =========================================================
+
 async function createEmbedding(input: string) {
   const openai = getOpenAIClient();
+
   const response = await openai.embeddings.create({
     model: OPENAI_EMBEDDING_MODEL,
     input,
@@ -96,8 +202,13 @@ async function createEmbedding(input: string) {
   return response.data[0]?.embedding ?? [];
 }
 
+// =========================================================
+// Semantic Search in Qdrant
+// =========================================================
+
 async function searchSimilarContent(embedding: number[]) {
   const qdrantClient = getQdrantClient();
+
   const results = await qdrantClient.search(QDRANT_COLLECTION, {
     vector: embedding,
     limit: 5,
@@ -122,11 +233,16 @@ async function searchSimilarContent(embedding: number[]) {
     } satisfies RecommendedResource;
   });
 
+  // =========================================================
+  // Fallback MongoDB Content
+  // =========================================================
+
   if (mapped.length > 0) {
     return mapped;
   }
 
   const fallbackContent = await Content.find().limit(5).lean();
+
   return fallbackContent.map((item) => ({
     title: item.title,
     content: item.content,
@@ -136,9 +252,17 @@ async function searchSimilarContent(embedding: number[]) {
   }));
 }
 
-function serializeDocument<T extends { _id?: unknown; createdAt?: unknown; updatedAt?: unknown }>(
-  document: T | null,
-) {
+// =========================================================
+// Serialize Mongo Documents
+// =========================================================
+
+function serializeDocument<
+  T extends {
+    _id?: unknown;
+    createdAt?: unknown;
+    updatedAt?: unknown;
+  },
+>(document: T | null) {
   if (!document) {
     return null;
   }

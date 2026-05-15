@@ -14,7 +14,7 @@ export default function MentorPage() {
   useEffect(() => {
     const loadEscalatedDoubts = async () => {
       try {
-        const response = await fetch("/api/doubts?status=escalated");
+        const response = await fetch("/api/doubts");
         const payload = await response.json();
 
         if (!response.ok) {
@@ -30,7 +30,12 @@ export default function MentorPage() {
           throw new Error(payload.error ?? "Failed to load escalated doubts.");
         }
 
-        setDoubts(payload.data ?? []);
+        const mentorQueue = (payload.data ?? []).filter(
+          (doubt: DoubtDetail) =>
+            doubt.status === "escalated" || doubt.status === "mentor_replied",
+        );
+
+        setDoubts(mentorQueue);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load escalated doubts.",
@@ -81,8 +86,14 @@ export default function MentorPage() {
                     {doubt.description}
                   </p>
                 </div>
-                <div className="rounded-full bg-sun/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sun">
-                  Escalated
+                <div
+                  className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+                    doubt.status === "mentor_replied"
+                      ? "bg-sky-100 text-sky-700"
+                      : "bg-sun/10 text-sun"
+                  }`}
+                >
+                  {doubt.status === "mentor_replied" ? "Replied" : "Escalated"}
                 </div>
               </div>
               <div className="mt-4 text-xs text-slate-500">

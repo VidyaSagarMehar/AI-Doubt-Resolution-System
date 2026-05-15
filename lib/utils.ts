@@ -9,6 +9,8 @@ export function getStatusTone(status: string) {
   switch (status) {
     case "resolved":
       return "bg-sea/10 text-sea";
+    case "mentor_replied":
+      return "bg-sky-100 text-sky-700";
     case "escalated":
       return "bg-sun/10 text-sun";
     default:

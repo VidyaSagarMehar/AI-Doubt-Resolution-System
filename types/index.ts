@@ -1,4 +1,4 @@
-export type DoubtStatus = "open" | "resolved" | "escalated";
+export type DoubtStatus = "open" | "resolved" | "escalated" | "mentor_replied";
 export type UserRole = "student" | "mentor";
 
 export type AuthUser = {
@@ -36,6 +36,15 @@ export type FeedbackPayload = {
   updatedAt: string;
 };
 
+export type MentorReplyPayload = {
+  _id: string;
+  mentorId: string;
+  mentorName: string;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type DoubtDetail = {
   _id: string;
   userId: string;
@@ -46,6 +55,7 @@ export type DoubtDetail = {
   updatedAt: string;
   aiResponse: AIResponsePayload | null;
   feedback?: FeedbackPayload[];
+  mentorReplies?: MentorReplyPayload[];
 };
 
 export type CreateDoubtInput = {
@@ -64,6 +74,11 @@ export type FeedbackInput = {
   doubtId: string;
   isHelpful: boolean;
   comment?: string;
+};
+
+export type MentorReplyInput = {
+  doubtId: string;
+  message: string;
 };
 
 export type ListDoubtsFilters = {

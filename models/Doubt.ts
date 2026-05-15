@@ -1,5 +1,29 @@
 import { InferSchemaType, Model, Schema, model, models } from "mongoose";
 
+const mentorReplySchema = new Schema(
+  {
+    mentorId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    mentorName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  {
+    _id: true,
+    timestamps: true,
+  },
+);
+
 const doubtSchema = new Schema(
   {
     userId: {
@@ -20,9 +44,13 @@ const doubtSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["open", "resolved", "escalated"],
+      enum: ["open", "resolved", "escalated", "mentor_replied"],
       default: "open",
       index: true,
+    },
+    mentorReplies: {
+      type: [mentorReplySchema],
+      default: [],
     },
   },
   {

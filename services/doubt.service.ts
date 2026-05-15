@@ -8,6 +8,7 @@ import type {
   CreateDoubtInput,
   FeedbackInput,
   ListDoubtsFilters,
+  MentorReplyInput,
   UpdateDoubtInput,
 } from "@/types";
 
@@ -98,6 +99,8 @@ export async function getDoubtById(id: string) {
     ...serializeDocument(doubt),
     aiResponse: aiResponse ? serializeDocument(aiResponse) : null,
     feedback: feedback.map((item) => serializeDocument(item)),
+    mentorReplies:
+      doubt.mentorReplies?.map((reply) => serializeDocument(reply)) ?? [],
   };
 }
 
@@ -203,12 +206,50 @@ export async function escalateDoubt(doubtId: string) {
   return getDoubtById(doubt._id.toString());
 }
 
+export async function addMentorReply(
+  input: MentorReplyInput & { mentorId: string; mentorName: string },
+) {
+  await connectToDatabase();
+
+  if (!Types.ObjectId.isValid(input.doubtId)) {
+    throw new Error("Invalid doubt id.");
+  }
+
+  if (!Types.ObjectId.isValid(input.mentorId)) {
+    throw new Error("Invalid mentor id.");
+  }
+
+  const doubt = await Doubt.findByIdAndUpdate(
+    input.doubtId,
+    {
+      $push: {
+        mentorReplies: {
+          mentorId: new Types.ObjectId(input.mentorId),
+          mentorName: input.mentorName.trim(),
+          message: input.message.trim(),
+        },
+      },
+      $set: {
+        status: "mentor_replied",
+      },
+    },
+    { new: true },
+  ).lean();
+
+  if (!doubt) {
+    throw new Error("Doubt not found.");
+  }
+
+  return getDoubtById(doubt._id.toString());
+}
+
 function serializeDocument<T extends { _id?: unknown; createdAt?: unknown; updatedAt?: unknown }>(
   document: T,
 ) {
   const typedDocument = document as T & {
     userId?: unknown;
     doubtId?: unknown;
+    mentorId?: unknown;
   };
 
   return {
@@ -216,6 +257,7 @@ function serializeDocument<T extends { _id?: unknown; createdAt?: unknown; updat
     _id: document._id?.toString?.() ?? document._id,
     userId: typedDocument.userId?.toString?.() ?? typedDocument.userId,
     doubtId: typedDocument.doubtId?.toString?.() ?? typedDocument.doubtId,
+    mentorId: typedDocument.mentorId?.toString?.() ?? typedDocument.mentorId,
     createdAt:
       document.createdAt instanceof Date
         ? document.createdAt.toISOString()

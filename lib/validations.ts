@@ -39,3 +39,8 @@ export const escalateSchema = z.object({
 export const aiSchema = z.object({
   doubtId: z.string().min(1),
 });
+
+export const mentorReplySchema = z.object({
+  doubtId: z.string().min(1),
+  message: z.string().min(3).max(3000).transform(sanitizeMultilineText),
+});

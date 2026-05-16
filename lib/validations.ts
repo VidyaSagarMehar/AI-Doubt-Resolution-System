@@ -18,7 +18,7 @@ export const loginSchema = z.object({
 });
 
 export const doubtSchema = z.object({
-  title: z.string().min(5).max(150).transform(sanitizeText),
+  title: z.string().max(150).transform(sanitizeText).optional(),
   description: z.string().min(10).max(5000).transform(sanitizeMultilineText),
 });
 

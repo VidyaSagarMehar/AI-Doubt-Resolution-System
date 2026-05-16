@@ -14,7 +14,7 @@ export default function MentorPage() {
   useEffect(() => {
     const loadEscalatedDoubts = async () => {
       try {
-        const response = await fetch("/api/doubts?status=escalated");
+        const response = await fetch("/api/doubts?status=escalated&allStudents=true");
         const payload = await response.json();
 
         if (!response.ok) {

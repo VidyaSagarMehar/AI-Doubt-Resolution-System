@@ -4,6 +4,7 @@ import AIResponse from "@/models/AIResponse";
 import Doubt from "@/models/Doubt";
 import Feedback from "@/models/Feedback";
 import User from "@/models/User";
+import { generateDoubtTitle } from "./rag.service";
 import type {
   CreateDoubtInput,
   FeedbackInput,
@@ -15,8 +16,13 @@ import type {
 export async function createDoubt(input: CreateDoubtInput) {
   await connectToDatabase();
 
-  if (!input.title?.trim() || !input.description?.trim()) {
-    throw new Error("Title and description are required.");
+  if (!input.description?.trim()) {
+    throw new Error("Description is required.");
+  }
+
+  let title = input.title?.trim();
+  if (!title) {
+    title = await generateDoubtTitle(input.description);
   }
 
   if (!Types.ObjectId.isValid(input.userId)) {
@@ -30,7 +36,7 @@ export async function createDoubt(input: CreateDoubtInput) {
 
   const doubt = await Doubt.create({
     userId: user._id,
-    title: input.title.trim(),
+    title,
     description: input.description.trim(),
     status: "open",
   });
@@ -64,16 +70,30 @@ export async function listDoubts(filters: ListDoubtsFilters = {}) {
   const responses = await AIResponse.find({
     doubtId: { $in: doubts.map((doubt) => doubt._id) },
   }).lean();
+  const feedbacks = await Feedback.find({
+    doubtId: { $in: doubts.map((doubt) => doubt._id) },
+  }).sort({ createdAt: 1 }).lean();
 
   const responseMap = new Map(
     responses.map((response) => [response.doubtId.toString(), response]),
   );
+
+  const feedbackMap = new Map<string, typeof feedbacks>();
+  for (const feedback of feedbacks) {
+    const doubtId = feedback.doubtId.toString();
+    if (!feedbackMap.has(doubtId)) {
+      feedbackMap.set(doubtId, []);
+    }
+    feedbackMap.get(doubtId)!.push(feedback);
+  }
 
   return doubts.map((doubt) => ({
     ...serializeDocument(doubt),
     aiResponse: responseMap.has(doubt._id.toString())
       ? serializeDocument(responseMap.get(doubt._id.toString())!)
       : null,
+    feedback: feedbackMap.get(doubt._id.toString())?.map((item) => serializeDocument(item)) ?? [],
+    mentorReplies: doubt.mentorReplies?.map((reply) => serializeDocument(reply)) ?? [],
   }));
 }
 

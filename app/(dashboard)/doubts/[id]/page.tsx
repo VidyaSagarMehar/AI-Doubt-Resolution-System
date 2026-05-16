@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { toast } from "react-toastify";
 import { RecommendationList } from "@/components/RecommendationList";
 import { useAuth } from "@/components/providers/AuthProvider";
-import type { DoubtDetail } from "@/types";
+import type { DoubtDetail, FeedbackPayload } from "@/types";
 import { formatDate, getStatusTone } from "@/lib/utils";
 
 export default function DoubtDetailPage() {
@@ -14,6 +15,7 @@ export default function DoubtDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [submittedFeedback, setSubmittedFeedback] = useState<boolean | null>(null);
   const [escalating, setEscalating] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
   const [replying, setReplying] = useState(false);
@@ -31,6 +33,12 @@ export default function DoubtDetailPage() {
         }
 
         setDoubt(payload.data);
+
+        // If feedback already exists for this doubt, pre-populate the state
+        const existingFeedback: FeedbackPayload[] = payload.data?.feedback ?? [];
+        if (existingFeedback.length > 0) {
+          setSubmittedFeedback(existingFeedback[existingFeedback.length - 1].isHelpful);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load doubt.");
       } finally {
@@ -42,7 +50,7 @@ export default function DoubtDetailPage() {
   }, [params.id]);
 
   const submitFeedback = async (isHelpful: boolean) => {
-    if (!doubt) return;
+    if (!doubt || submittedFeedback !== null) return;
     setFeedbackLoading(true);
     try {
       const response = await fetch("/api/feedback", {
@@ -56,8 +64,16 @@ export default function DoubtDetailPage() {
         if (response.status === 403) { window.location.href = "/doubts"; return; }
         throw new Error(payload.error ?? "Failed to submit feedback.");
       }
+      setSubmittedFeedback(isHelpful);
+      toast.success(
+        isHelpful
+          ? "👍 Glad it helped! Feedback recorded."
+          : "👎 Feedback noted. Consider escalating to a mentor.",
+        { autoClose: 4000 }
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit feedback.");
+      const msg = err instanceof Error ? err.message : "Failed to submit feedback.";
+      toast.error(`❌ ${msg}`);
     } finally {
       setFeedbackLoading(false);
     }
@@ -79,8 +95,13 @@ export default function DoubtDetailPage() {
         throw new Error(payload.error ?? "Failed to escalate doubt.");
       }
       setDoubt(payload.data);
+      toast.success(
+        "🚀 Doubt escalated to a mentor! You'll be notified when they reply.",
+        { autoClose: 5000 }
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to escalate doubt.");
+      const msg = err instanceof Error ? err.message : "Failed to escalate doubt.";
+      toast.error(`❌ ${msg}`);
     } finally {
       setEscalating(false);
     }
@@ -103,8 +124,10 @@ export default function DoubtDetailPage() {
       }
       setDoubt(payload.data);
       setReplyMessage("");
+      toast.success("✅ Reply sent to the student successfully!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send mentor reply.");
+      const msg = err instanceof Error ? err.message : "Failed to send mentor reply.";
+      toast.error(`❌ ${msg}`);
     } finally {
       setReplying(false);
     }
@@ -123,6 +146,7 @@ export default function DoubtDetailPage() {
 
   const isMentor = user?.role === "mentor";
   const hasMentorReplies = (doubt.mentorReplies?.length ?? 0) > 0;
+  const alreadyEscalated = doubt.status === "escalated" || doubt.status === "mentor_replied";
 
   return (
     <section className="space-y-6">
@@ -169,34 +193,89 @@ export default function DoubtDetailPage() {
                 </p>
 
                 {!isMentor ? (
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                      onClick={() => void submitFeedback(true)}
-                      disabled={feedbackLoading}
-                      className="font-display rounded-full border border-brand-success/40 px-4 py-2 text-sm font-medium text-brand-success transition-colors duration-150 hover:bg-brand-success/10 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Helpful
-                    </button>
-                    <button
-                      onClick={() => void submitFeedback(false)}
-                      disabled={feedbackLoading}
-                      className="font-display rounded-full border border-brand-border px-4 py-2 text-sm font-medium text-brand-neutral/70 transition-colors duration-150 hover:border-brand-accent/40 hover:text-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Not helpful
-                    </button>
-                    <button
-                      onClick={() => void escalate()}
-                      disabled={escalating || doubt.status === "escalated" || doubt.status === "mentor_replied"}
-                      className="font-display rounded-full border border-brand-link/40 px-4 py-2 text-sm font-medium text-brand-link transition-colors duration-150 hover:bg-brand-link/10 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {doubt.status === "mentor_replied"
-                        ? "Mentor replied"
-                        : doubt.status === "escalated"
-                          ? "Escalated to mentor"
-                          : escalating
-                            ? "Escalating..."
-                            : "Escalate to mentor"}
-                    </button>
+                  <div className="mt-6 space-y-4">
+                    {/* Feedback action row */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {submittedFeedback !== null ? (
+                        /* ── Feedback already submitted — show persistent badge ── */
+                        <div
+                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+                            submittedFeedback
+                              ? "border-brand-success/50 bg-brand-success/10 text-brand-success"
+                              : "border-brand-accent/50 bg-brand-accent/10 text-brand-accent"
+                          }`}
+                        >
+                          {submittedFeedback ? (
+                            <>
+                              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                              </svg>
+                              Marked as Helpful
+                            </>
+                          ) : (
+                            <>
+                              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+                              </svg>
+                              Marked as Not Helpful
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        /* ── Feedback not yet submitted — show buttons ── */
+                        <>
+                          <p className="text-xs text-brand-neutral/50">Was this answer helpful?</p>
+                          <button
+                            onClick={() => void submitFeedback(true)}
+                            disabled={feedbackLoading}
+                            className="font-display inline-flex items-center gap-2 rounded-full border border-brand-success/40 px-4 py-2 text-sm font-medium text-brand-success transition-colors duration-150 hover:bg-brand-success/10 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                            </svg>
+                            Helpful
+                          </button>
+                          <button
+                            onClick={() => void submitFeedback(false)}
+                            disabled={feedbackLoading}
+                            className="font-display inline-flex items-center gap-2 rounded-full border border-brand-border px-4 py-2 text-sm font-medium text-brand-neutral/70 transition-colors duration-150 hover:border-brand-accent/40 hover:text-brand-accent disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+                            </svg>
+                            Not helpful
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Escalate button — separate row */}
+                    <div>
+                      <button
+                        onClick={() => void escalate()}
+                        disabled={escalating || alreadyEscalated}
+                        className={`font-display inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
+                          alreadyEscalated
+                            ? "border-brand-link/20 text-brand-link/50"
+                            : "border-brand-link/40 text-brand-link hover:bg-brand-link/10"
+                        }`}
+                      >
+                        {doubt.status === "mentor_replied" ? (
+                          <>✅ Mentor replied</>
+                        ) : doubt.status === "escalated" ? (
+                          <>🚀 Escalated to mentor</>
+                        ) : escalating ? (
+                          <>⏳ Escalating...</>
+                        ) : (
+                          <>🚀 Escalate to mentor</>
+                        )}
+                      </button>
+                      {!alreadyEscalated && (
+                        <p className="mt-1.5 text-xs text-brand-neutral/40">
+                          Not satisfied with the AI answer? Escalate for a human mentor to review.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </>

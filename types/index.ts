@@ -59,7 +59,7 @@ export type DoubtDetail = {
 };
 
 export type CreateDoubtInput = {
-  title: string;
+  title?: string;
   description: string;
   userId: string;
 };

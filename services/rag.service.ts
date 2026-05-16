@@ -188,6 +188,40 @@ ${generatedAnswer}`;
 }
 
 // =========================================================
+// Generate Doubt Title
+// =========================================================
+
+export async function generateDoubtTitle(description: string): Promise<string> {
+  const openai = getOpenAIClient();
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_CHAT_MODEL,
+      temperature: 0.3,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert at summarizing educational doubts. Create a very concise, professional, and clear title (max 60 characters) for the following doubt description. Return ONLY the title text.",
+        },
+        {
+          role: "user",
+          content: description,
+        },
+      ],
+    });
+
+    const title = completion.choices[0]?.message?.content?.trim() ?? "";
+    // Clean up quotes if AI included them
+    return title.replace(/^["']|["']$/g, "").slice(0, 100);
+  } catch (error) {
+    console.error("Failed to generate title:", error);
+    // Fallback: first 50 chars of description
+    return description.slice(0, 50).trim() + (description.length > 50 ? "..." : "");
+  }
+}
+
+// =========================================================
 // Create Embedding
 // =========================================================
 

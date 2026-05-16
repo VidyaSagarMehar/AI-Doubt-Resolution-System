@@ -16,11 +16,16 @@ export async function GET(request: NextRequest) {
 
     const status = request.nextUrl.searchParams.get("status") ?? undefined;
     const userEmail = request.nextUrl.searchParams.get("userEmail") ?? undefined;
+    const allStudents = request.nextUrl.searchParams.get("allStudents") === "true";
+
+    // Mentors can optionally pass ?allStudents=true to view all student doubts
+    // (used in the mentor workspace). Otherwise everyone sees their own doubts only.
+    const userId = allStudents && user.role === "mentor" ? undefined : user.id;
 
     const doubts = await listDoubts({
       status,
       userEmail,
-      userId: user.role === "mentor" ? undefined : user.id,
+      userId,
     });
     return NextResponse.json({ data: doubts }, { status: 200 });
   } catch (error) {

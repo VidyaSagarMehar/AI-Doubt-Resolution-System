@@ -23,54 +23,64 @@ export function DashboardHeader() {
 	};
 
 	return (
-		<header className="border-b border-brand-border bg-brand-bg/95 backdrop-blur-sm sticky top-0 z-40">
+		<header className="sticky top-0 z-40 border-b border-brand-border bg-brand-bg/95 backdrop-blur-sm">
 			<div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
 				{/* Logo */}
-				<div className="flex flex-col justify-center items-center">
+				<div className="flex flex-col items-center justify-center">
 					<span className="font-display text-2xl font-semibold lowercase tracking-[0.2em] text-brand">
 						House of EdTech
 					</span>
-					<h1 className="font-display text-xs uppercase font-extralight text-brand-text mt-0.5 tracking-[0.2em]">
+					<h1 className="mt-0.5 font-display text-xs font-extralight uppercase tracking-[0.2em] text-brand-text">
 						Doubt Resolution Hub
 					</h1>
 				</div>
 
-				<div className="flex flex-wrap items-center gap-3">
+				{/* Right Section */}
+				<div className="flex flex-wrap items-center gap-3 sm:gap-4">
 					{/* Nav links */}
 					<nav className="flex flex-wrap gap-1">
 						{studentNavItems.map((item) => (
 							<Link
 								key={item.href}
 								href={item.href}
-								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-colors duration-150 hover:bg-brand-surface hover:text-brand-link"
+								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface hover:text-brand-link"
 							>
 								{item.label}
 							</Link>
 						))}
-						{user?.role === 'mentor' ? (
+
+						{user?.role === 'mentor' && (
 							<Link
 								href={mentorNavItem.href}
-								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-colors duration-150 hover:bg-brand-surface hover:text-brand-link"
+								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface hover:text-brand-link"
 							>
 								{mentorNavItem.label}
 							</Link>
-						) : null}
+						)}
 					</nav>
 
-					{/* User chip */}
-					<div className="rounded-lg border border-brand-border bg-brand-surface px-4 py-2 text-right">
-						<p className="font-display text-sm font-semibold text-brand-text">
-							{loading ? 'Loading...' : (user?.name ?? 'Unknown user')}
-						</p>
-						<p className="text-xs uppercase tracking-wide text-brand-neutral/60">
-							{user?.role ?? 'guest'}
-						</p>
+					{/* User Profile Chip (Improved UI) */}
+					<div className="flex items-center gap-3 rounded-xl border border-brand-border bg-brand-surface px-4 py-2 shadow-sm">
+						{/* Avatar */}
+						<div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-accent/20 text-sm font-semibold text-brand-accent">
+							{loading ? '...' : (user?.name?.charAt(0)?.toUpperCase() ?? 'U')}
+						</div>
+
+						{/* Name + Role */}
+						<div className="flex flex-col leading-tight">
+							<p className="font-display text-sm font-semibold text-brand-text">
+								{loading ? 'Loading...' : (user?.name ?? 'Unknown user')}
+							</p>
+							<p className="text-[10px] uppercase tracking-wide text-brand-neutral/60">
+								{user?.role ?? 'guest'}
+							</p>
+						</div>
 					</div>
 
-					{/* Log out */}
+					{/* Logout */}
 					<button
 						onClick={() => void handleLogout()}
-						className="font-display rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-text/80 transition-colors duration-150 hover:border-brand-accent hover:text-brand-accent"
+						className="font-display rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:border-brand-accent hover:text-brand-accent"
 					>
 						Log out
 					</button>

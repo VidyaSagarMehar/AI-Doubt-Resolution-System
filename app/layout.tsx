@@ -3,11 +3,13 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './globals.css';
+import { Footer } from '@/components/Footer';
 
 export const metadata: Metadata = {
 	title: 'House of EdTech',
 	description: 'AI-powered doubt resolution system for students and mentors.',
 };
+
 
 export default function RootLayout({
 	children,
@@ -25,7 +27,10 @@ export default function RootLayout({
 				/>
 			</head>
 			<body>
-				<AuthProvider>{children}</AuthProvider>
+				<AuthProvider>
+					{children}
+					<Footer />
+				</AuthProvider>
 				<ToastContainer
 					position="bottom-right"
 					autoClose={4000}

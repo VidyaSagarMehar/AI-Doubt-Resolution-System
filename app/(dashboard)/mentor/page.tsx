@@ -17,6 +17,7 @@ export default function MentorPage() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [doubts, setDoubts] = useState<DoubtDetail[]>([]);
 
   useEffect(() => {
     const loadMentorData = async () => {
@@ -158,8 +159,8 @@ export default function MentorPage() {
                   <p className="mt-1 text-xs text-brand-neutral/60 line-clamp-2">{gap.description}</p>
                 </Link>
               ))}
-              <Link 
-                href="/admin/ingest" 
+              <Link
+                href="/admin/ingest"
                 className="mt-4 block text-center rounded-xl border border-brand-link/40 bg-brand-link/5 p-3 text-xs font-semibold text-brand-link hover:bg-brand-link/10 transition-colors"
               >
                 Go to Ingestion Dash →

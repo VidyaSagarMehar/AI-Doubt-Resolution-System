@@ -7,6 +7,7 @@ import { cleanAndChunkContent, RawChunk } from "./chunking.service";
 import type { ResourceType } from "@/types";
 
 export type YouTubeMetadata = {
+  title: string;
   videoId: string;
   channelName: string;
   thumbnailUrl: string;
@@ -44,7 +45,7 @@ export async function ingestContent(input: {
 
   // 2. Batch Generate Embeddings
   const textsToEmbed = rawChunks.map(chunk => `Title: ${input.title}\nTopic: ${chunk.topic}\n\n${chunk.text}`);
-  
+
   const embeddingResponse = await openai.embeddings.create({
     model: OPENAI_EMBEDDING_MODEL,
     input: textsToEmbed,
@@ -59,7 +60,7 @@ export async function ingestContent(input: {
   for (let i = 0; i < rawChunks.length; i++) {
     const chunk = rawChunks[i];
     const vector = embeddings[i]?.embedding;
-    
+
     if (!vector) continue;
 
     const embeddingId = crypto.randomUUID();

@@ -296,6 +296,9 @@ async function searchSimilarContent(embedding: number[]) {
       startTime?: string;
       endTime?: string;
       topic?: string;
+      videoId?: string;
+      channelName?: string;
+      thumbnailUrl?: string;
     };
 
     return {
@@ -309,6 +312,9 @@ async function searchSimilarContent(embedding: number[]) {
       score: item.score ?? 0,
       startTime: payload.startTime,
       endTime: payload.endTime,
+      videoId: payload.videoId,
+      channelName: payload.channelName,
+      thumbnailUrl: payload.thumbnailUrl,
     } satisfies RecommendedResource;
   });
 

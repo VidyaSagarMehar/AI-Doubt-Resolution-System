@@ -59,6 +59,9 @@ export type QdrantPayload = {
   startTime?: string;
   endTime?: string;
   chunkIndex?: number;
+  videoId?: string;
+  channelName?: string;
+  thumbnailUrl?: string;
 };
 
 export async function upsertContentPoints(points: {

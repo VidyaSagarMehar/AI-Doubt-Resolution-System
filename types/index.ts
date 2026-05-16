@@ -29,6 +29,9 @@ export type RecommendedResource = {
   score: number;
   startTime?: string;
   endTime?: string;
+  videoId?: string;
+  channelName?: string;
+  thumbnailUrl?: string;
 };
 
 export type AIResponsePayload = {

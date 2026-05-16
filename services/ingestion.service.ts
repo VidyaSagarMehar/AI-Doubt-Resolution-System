@@ -3,8 +3,14 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { getOpenAIClient, OPENAI_EMBEDDING_MODEL } from "@/lib/openai";
 import { upsertContentPoints } from "@/lib/qdrant";
 import crypto from "crypto";
-import { cleanAndChunkContent } from "./chunking.service";
+import { cleanAndChunkContent, RawChunk } from "./chunking.service";
 import type { ResourceType } from "@/types";
+
+export type YouTubeMetadata = {
+  videoId: string;
+  channelName: string;
+  thumbnailUrl: string;
+};
 
 export async function ingestContent(input: {
   title: string;
@@ -12,13 +18,25 @@ export async function ingestContent(input: {
   url?: string;
   type?: ResourceType;
   tags?: string[];
+  preChunkedData?: RawChunk[];
+  youtubeMetadata?: YouTubeMetadata;
 }) {
   await connectToDatabase();
 
+  // Prevent duplicate ingestion
+  if (input.url) {
+    const existingUrl = await Content.findOne({ url: input.url }).select("_id").lean();
+    if (existingUrl) {
+      throw new Error(`Content with URL ${input.url} has already been ingested.`);
+    }
+  }
+
   const openai = getOpenAIClient();
 
-  // 1. Clean and Semantic Chunking via LLM
-  const rawChunks = await cleanAndChunkContent(input.content, input.type || "text");
+  // 1. Clean and Semantic Chunking via LLM (or use pre-chunked from preview)
+  const rawChunks = input.preChunkedData && input.preChunkedData.length > 0
+    ? input.preChunkedData
+    : await cleanAndChunkContent(input.content, input.type || "text");
 
   if (rawChunks.length === 0) {
     throw new Error("No educational chunks could be extracted from the content.");
@@ -69,6 +87,11 @@ export async function ingestContent(input: {
         startTime: chunk.startTime,
         endTime: chunk.endTime,
         chunkIndex: i,
+        ...(input.youtubeMetadata && {
+          videoId: input.youtubeMetadata.videoId,
+          channelName: input.youtubeMetadata.channelName,
+          thumbnailUrl: input.youtubeMetadata.thumbnailUrl,
+        }),
       },
     });
   }
@@ -81,6 +104,11 @@ export async function ingestContent(input: {
     url: input.url,
     type: input.type,
     tags: input.tags || [],
+    ...(input.youtubeMetadata && {
+      videoId: input.youtubeMetadata.videoId,
+      channelName: input.youtubeMetadata.channelName,
+      thumbnailUrl: input.youtubeMetadata.thumbnailUrl,
+    }),
   });
 
   // 5. Bulk Upsert to Qdrant

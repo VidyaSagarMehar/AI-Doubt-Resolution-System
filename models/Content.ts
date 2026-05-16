@@ -32,6 +32,9 @@ const contentSchema = new Schema(
       type: String,
       trim: true,
     },
+    videoId: { type: String },
+    channelName: { type: String },
+    thumbnailUrl: { type: String },
     type: {
       type: String,
       enum: ["text", "video", "article", "documentation", "pdf_notes", "playlist", "course"],

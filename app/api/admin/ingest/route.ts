@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, content, tags, url, type } = body;
+    const { title, content, tags, url, type, preChunkedData, youtubeMetadata } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -19,7 +19,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await ingestContent({ title, content, tags, url, type });
+    const result = await ingestContent({ 
+      title, 
+      content, 
+      tags, 
+      url, 
+      type,
+      preChunkedData,
+      youtubeMetadata
+    });
 
     return NextResponse.json({
       success: true,

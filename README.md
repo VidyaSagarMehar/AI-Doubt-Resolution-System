@@ -1,124 +1,252 @@
 # House of EdTech - AI RAG Platform
 
-## House of EdTech
+## 👨‍💻 Demo Credentials
+**Explore the platform instantly using these built-in accounts:**
 
-A production-grade, AI-powered Educational RAG (Retrieval-Augmented Generation) Platform designed to instantly resolve student doubts, provide intelligent timestamp-aware video recommendations, and allow mentors to seamlessly ingest course materials into a vector database.
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Student** | `demostudent@gmail.com` | `Demo@12345` |
+| **Mentor / Admin** | `demomentor@gmail.com` | `Demo@12345` |
 
-## 🌟 Key Features
+---
 
-- **Semantic Doubt Resolution**: Students can ask complex technical questions and receive accurate, context-aware answers in seconds.
-- **Auto YouTube Ingestion**: Mentors simply paste a YouTube URL. The system automatically fetches the metadata, parses the transcript, cleans the noise using GPT-4o-mini, semantically chunks the concepts, and embeds them into Qdrant.
-- **Timestamp Deep-Linking**: AI recommendations intelligently parse the start and end times of video chunks, providing students with clickable UI cards that jump directly to the exact second a concept is taught.
-- **Mentor Escalation System**: When the AI's confidence score drops or a student marks an answer as unhelpful, the system instantly escalates the doubt to a real human mentor.
-- **Knowledge Gap Analytics**: Mentors have access to a specialized dashboard tracking the most frequently escalated topics, allowing them to proactively ingest missing curriculum.
+## 🌟 Project Overview
+**House of EdTech** is a production-grade, AI-powered Educational RAG (Retrieval-Augmented Generation) Platform designed to eradicate the "doubt-resolution bottleneck" in modern learning environments. 
 
-## 🏗️ Architecture & Workflows
+By leveraging **Retrieval-Augmented Generation**, this platform instantly resolves student doubts by performing semantic searches across course materials—including YouTube lecture transcripts, PDF notes, and documentation.
 
-### System High-Level Design (HLD)
+### Why Educational RAG?
+Traditional LMS systems force students to wait hours or days for human replies. This platform understands your specific course context, allowing students to get context-aware answers in seconds, deep-linked directly to the relevant lecture moment.
+
+### Core Capabilities
+*   **Timestamp-Aware Video Retrieval:** Deep-link students directly to the exact second a concept is taught.
+*   **Intelligent Auto-Ingestion:** Automated pipelines to clean transcripts and group content by educational concepts.
+*   **Human-in-the-Loop Escalation:** High-confidence AI answers with seamless fallback to human mentors.
+*   **Proactive Knowledge Gap Detection:** Dashboard tracking for frequently escalated topics.
+
+---
+
+## 🏗️ Architecture & Design
+
+### High-Level Design (HLD)
 ![System Architecture](./public/assets/diagrams/hld.png)
+
+```mermaid
+flowchart TD
+    Student["Student"]
+    Mentor["Mentor / Admin"]
+
+    subgraph Frontend_Layer ["Frontend Layer"]
+        Dashboard["Student Dashboard UI"]
+        MentorDash["Mentor Escalation UI"]
+        IngestUI["Ingestion Portal UI"]
+    end
+
+    subgraph Backend_API_Layer ["Backend API Layer"]
+        AuthMiddleware["Role-Based Auth Middleware"]
+        RAGService["RAG Orchestration Service"]
+        IngestService["Auto-Ingestion Service"]
+    end
+
+    subgraph Storage_Databases ["Storage & Databases"]
+        Mongo[("MongoDB Atlas")]
+        Qdrant[("Qdrant Vector DB")]
+    end
+
+    subgraph External_Integrations ["External Integrations"]
+        OpenAI["OpenAI API"]
+        YouTube["YouTube API"]
+    end
+
+    Student --> Dashboard
+    Mentor --> MentorDash
+    Mentor --> IngestUI
+
+    Dashboard --> AuthMiddleware
+    MentorDash --> AuthMiddleware
+    IngestUI --> AuthMiddleware
+
+    AuthMiddleware --> RAGService
+    AuthMiddleware --> IngestService
+
+    RAGService --> Mongo
+    RAGService --> Qdrant
+    RAGService --> OpenAI
+
+    IngestService --> YouTube
+    IngestService --> OpenAI
+    IngestService --> Qdrant
+    IngestService --> Mongo
+```
 
 ### RAG Retrieval Pipeline (LLD)
 ![RAG Pipeline](./public/assets/diagrams/rag.png)
 
+```mermaid
+sequenceDiagram
+    participant UI as Student UI
+    participant API as Next.js API
+    participant Mongo as MongoDB
+    participant Embed as OpenAI Embeddings
+    participant Qdrant as Qdrant Vector DB
+    participant LLM as OpenAI GPT
+
+    UI->>API: POST /api/ai
+    API->>Mongo: Fetch doubt details
+    Mongo-->>API: History context
+    API->>LLM: Rewrite query
+    LLM-->>API: Optimized Search Query
+    API->>Embed: Generate Vector Embedding
+    Embed-->>API: Vector Array
+    API->>Qdrant: Search Vector
+    Qdrant-->>API: Semantic Chunks
+    API->>LLM: Stream prompt
+    LLM-->>API: Final Answer
+    API->>Mongo: Save AIResponse
+    API-->>UI: Return Answer
+```
+
 ### Automated Ingestion Workflow
 ![Ingestion Workflow](./public/assets/diagrams/ingestion.png)
 
-*(For a deep-dive into the raw schemas and technical specifications, please see the [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md) document).*
+```mermaid
+sequenceDiagram
+    participant UI as Mentor UI
+    participant API as Next.js API
+    participant YT as YouTube Services
+    participant Mongo as MongoDB
+    participant LLM as OpenAI Chunking
+    participant Embed as OpenAI Embeddings
+    participant Qdrant as Qdrant Vector DB
+
+    UI->>API: POST YouTube URL
+    API->>YT: Fetch Metadata
+    API->>YT: Fetch Transcript
+    YT-->>API: Raw Transcript
+    API->>LLM: Clean and Chunk
+    LLM-->>API: JSON Chunks
+    API-->>UI: Return preview
+    
+    UI->>API: POST Approve
+    API->>Mongo: Check duplicate
+    API->>Embed: Batch embed
+    Embed-->>API: Array of Vectors
+    API->>Qdrant: Bulk Upsert
+    API->>Mongo: Save metadata
+    API-->>UI: Success Toast
+```
+
+---
+
+## 📊 Database Schema (ERD)
+```mermaid
+erDiagram
+    USER ||--o{ DOUBT : asks
+    DOUBT ||--o| AI_RESPONSE : receives
+    AI_RESPONSE ||--o{ RECOMMENDED_RESOURCE : contains
+    CONTENT ||--o{ CHUNK : splits_into
+    
+    USER {
+        string name
+        string email
+        string role
+    }
+
+    DOUBT {
+        string title
+        string description
+        string status
+    }
+
+    AI_RESPONSE {
+        string answer
+        float confidenceScore
+    }
+
+    RECOMMENDED_RESOURCE {
+        string title
+        string url
+    }
+
+    CONTENT {
+        string title
+        string url
+        string type
+    }
+```
+
+---
+
+## 🛠️ Technical Implementation
+
+### Folder Structure
+```text
+/app
+  /(dashboard)     # Protected routes (Student/Mentor)
+  /api             # Backend REST endpoints
+/components        # Reusable React UI (ChatUI, RecommendationList, Footer)
+/lib               # Core singletons (mongodb.ts, qdrant.ts, openai.ts)
+/services          # Business logic (rag.service.ts, ingestion.service.ts)
+/models            # Mongoose schemas (Doubt, AIResponse, Content)
+/types             # Global TypeScript definitions
+```
+
+### Chunk Schema (Qdrant Payload)
+```typescript
+{
+  title: string;           // Resource title
+  content: string;         // Semantic text chunk
+  url?: string;            // Deep-link URL
+  type: ResourceType;      // "video" | "article" | "pdf_notes"
+  startTime?: string;      // Video offset (e.g., "1:24")
+  endTime?: string;        // End offset
+  videoId?: string;        // YouTube ID
+  thumbnailUrl?: string;   // Visual asset
+}
+```
+
+---
 
 ## 🚀 Quick Start & Installation
 
-### Prerequisites
-- Node.js (v18+)
-- MongoDB instance (Atlas or local)
-- Qdrant instance (Cloud or Docker)
-- OpenAI API Key
-
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/your-username/house-of-edtech.git
+git clone https://github.com/vidyaSagarMehar/house-of-edtech.git
 cd house-of-edtech
 npm install
 ```
 
-### 2. Environment Variables
-Create a `.env.local` file in the root directory:
+### 2. Environment Variables (.env.local)
 ```env
-# Authentication
-JWT_SECRET=your_super_secret_jwt_key_32_chars
-
-# MongoDB
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/ai-doubt-system?retryWrites=true&w=majority
-
-# OpenAI
-OPENAI_API_KEY=sk-your-openai-key
-
-# Qdrant Vector Database
-QDRANT_URL=https://your-cluster-url.qdrant.tech:6333
-QDRANT_API_KEY=your_qdrant_api_key
+JWT_SECRET=your_secret_key
+MONGODB_URI=your_mongodb_uri
+OPENAI_API_KEY=your_openai_key
+QDRANT_URL=your_qdrant_url
+QDRANT_API_KEY=your_qdrant_key
 ```
 
 ### 3. Run Development Server
 ```bash
 npm run dev
 ```
-Visit `http://localhost:3000`.
 
 ---
 
-## 👨‍💻 Demo Credentials
-
-To explore the platform, you can use the following built-in demo accounts:
-
-**Student Account:**
-- **Email:** demostudent@gmail.com
-- **Password:** Demo@12345
-
-**Mentor / Admin Account:**
-- **Email:** demomentor@gmail.com
-- **Password:** Demo@12345
+## 🛡️ Security & Performance
+*   **JWT HTTP-Only Cookies:** Mitigates XSS attacks.
+*   **RBAC Middleware:** Protects admin/mentor routes.
+*   **Batch Embeddings:** Optimized OpenAI API usage during ingestion.
+*   **Semantic Query Rewriting:** Enhances retrieval accuracy by contextualizing queries with chat history.
 
 ---
 
-## ⚙️ Workflows
-
-### 1. Ingestion Workflow (Mentor)
-1. Log in as a Mentor.
-2. Navigate to **Ingest Knowledge**.
-3. Select the **YouTube Auto-Ingest** tab.
-4. Paste a YouTube URL (e.g., `https://youtube.com/watch?v=...`) and click **Fetch & Analyze**.
-5. The system fetches the video metadata, scrapes the transcript, and uses GPT-4o-mini to segment it into timestamped, noise-free semantic chunks.
-6. Review the generated chunks in the UI and click **Approve & Embed**.
-7. The system dynamically batches the embeddings and bulk-upserts them into Qdrant.
-
-### 2. AI Chat Workflow (Student)
-1. Log in as a Student.
-2. Type a question like *"Explain let vs const in JavaScript."*
-3. The RAG Orchestrator pulls the conversation history and rewrites the query for semantic optimization.
-4. The backend queries **Qdrant** for the top 5 most relevant semantic chunks.
-5. The context is streamed to GPT-4o-mini to generate an accurate answer.
-6. The UI dynamically maps the retrieved Qdrant payloads into beautiful Recommendation Cards, deep-linking the video thumbnail and exact timestamp.
+## 🛣️ Future Roadmap
+1.  **Multilingual Ingestion:** Translating transcripts into English for universal search.
+2.  **Adaptive Learning:** Adjusting AI vocabulary based on student level.
+3.  **Reranking Layer:** Implementing Cohere rerankers for ultra-precise retrieval.
+4.  **Audio Search:** Whisper integration for voice-based doubts.
 
 ---
 
-## ☁️ Deployment
-
-### Vercel (Recommended)
-1. Push your code to GitHub.
-2. Import the project in Vercel.
-3. Add your `.env.local` variables in the Vercel Dashboard.
-4. Click **Deploy**.
-
-### Docker
-A `Dockerfile` is provided for containerized deployment:
-```bash
-docker build -t house-of-edtech .
-docker run -p 3000:3000 --env-file .env.local house-of-edtech
-```
-
----
-
-## 🛡️ Security
-- **JWT HTTP-Only Cookies:** Used to completely mitigate XSS attacks during authentication.
-- **RBAC Middleware:** Next.js Edge Middleware rigorously guards all `/api/admin` and `/mentor` routes.
-- **Duplicate Prevention:** The ingestion pipeline automatically queries MongoDB before executing costly OpenAI embedding batches to prevent redundant API usage and vector poisoning.
-
+Created by **Vidya Sagar Mehar**
+[GitHub](https://github.com/vidyaSagarMehar/) | [LinkedIn](https://www.linkedin.com/in/vidyasagarmehar/)

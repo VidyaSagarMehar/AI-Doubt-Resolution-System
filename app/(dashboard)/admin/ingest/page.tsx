@@ -93,9 +93,12 @@ export default function AdminIngestPage() {
                 className="w-full bg-brand-bg border-brand-border text-brand-text rounded-xl p-2.5 focus:ring-2 focus:ring-brand-accent/50 outline-none"
               >
                 <option value="text">Text / Article</option>
-                <option value="video">Video Lecture</option>
+                <option value="video">Video Lecture / Transcript</option>
                 <option value="documentation">Official Documentation</option>
                 <option value="article">Blog Post</option>
+                <option value="pdf_notes">PDF Notes</option>
+                <option value="playlist">Video Playlist</option>
+                <option value="course">Full Course Material</option>
               </select>
             </div>
           </div>

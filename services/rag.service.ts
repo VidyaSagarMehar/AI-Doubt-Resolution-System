@@ -109,7 +109,7 @@ export async function generateAIResponseForDoubt(doubtId: string) {
       (document, index) =>
         `Source ${index + 1}: ${document.title}
 Tags: ${document.tags.join(", ") || "none"}
-Content: ${document.content}`,
+${(document as any).startTime ? `Timestamp: ${(document as any).startTime} - ${(document as any).endTime || "onwards"}\n` : ""}${(document as any).topic ? `Topic: ${(document as any).topic}\n` : ""}Content: ${document.content}`,
     )
     .join("\n\n");
 
@@ -293,6 +293,9 @@ async function searchSimilarContent(embedding: number[]) {
       url?: string;
       type?: string;
       embeddingId?: string;
+      startTime?: string;
+      endTime?: string;
+      topic?: string;
     };
 
     return {
@@ -304,6 +307,8 @@ async function searchSimilarContent(embedding: number[]) {
       embeddingId:
         payload.embeddingId ?? String(item.id ?? crypto.randomUUID()),
       score: item.score ?? 0,
+      startTime: payload.startTime,
+      endTime: payload.endTime,
     } satisfies RecommendedResource;
   });
 
@@ -317,15 +322,20 @@ async function searchSimilarContent(embedding: number[]) {
 
   const fallbackContent = await Content.find().limit(5).lean();
 
-  return fallbackContent.map((item) => ({
-    title: item.title,
-    content: item.content,
-    url: item.url,
-    type: item.type as any,
-    tags: item.tags,
-    embeddingId: item.embeddingId,
-    score: 0,
-  }));
+  return fallbackContent.map((item) => {
+    // If the old format exists, use content, else use rawContent
+    const contentText = "content" in item ? (item as any).content : (item as any).rawContent;
+    
+    return {
+      title: item.title,
+      content: contentText ?? "",
+      url: item.url,
+      type: item.type as any,
+      tags: item.tags,
+      embeddingId: "embeddingId" in item ? String((item as any).embeddingId) : String(item._id),
+      score: 0,
+    };
+  });
 }
 
 // =========================================================

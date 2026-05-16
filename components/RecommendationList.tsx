@@ -31,17 +31,28 @@ export function RecommendationList({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-accent/20 bg-brand-accent/5 text-lg transition-transform group-hover:scale-110">
-                    {resource.type === "video"
+                    {resource.type === "video" || resource.type === "playlist"
                       ? "📺"
-                      : resource.type === "article"
-                        ? "📄"
-                        : resource.type === "documentation"
-                          ? "📚"
-                          : "📝"}
+                      : resource.type === "course"
+                        ? "🎓"
+                        : resource.type === "article"
+                          ? "📄"
+                          : resource.type === "pdf_notes"
+                            ? "📓"
+                            : resource.type === "documentation"
+                              ? "📚"
+                              : "📝"}
                   </span>
-                  <h4 className="font-display font-semibold text-brand-text">
-                    {resource.title}
-                  </h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-display font-semibold text-brand-text">
+                      {resource.title}
+                    </h4>
+                    {resource.startTime && (
+                      <span className="text-[10px] font-medium text-brand-accent mt-0.5">
+                        ⏱️ {resource.startTime} {resource.endTime ? `- ${resource.endTime}` : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
                   {(resource.score * 100).toFixed(1)}% match
@@ -63,29 +74,45 @@ export function RecommendationList({
                   ))}
                 </div>
 
-                {resource.url ? (
-                  <a
-                    href={resource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-display flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-link/40 px-3 py-1.5 text-xs font-medium text-brand-link transition-colors hover:bg-brand-link/10"
-                  >
-                    View Resource
-                    <svg
-                      className="h-3 w-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                {resource.url ? (() => {
+                  let finalUrl = resource.url;
+                  if (resource.startTime && (finalUrl.includes("youtube.com") || finalUrl.includes("youtu.be"))) {
+                    // Convert "1:24" to seconds for YT
+                    const parts = resource.startTime.split(":");
+                    let seconds = 0;
+                    if (parts.length === 3) {
+                      seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+                    } else if (parts.length === 2) {
+                      seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                    }
+                    if (seconds > 0) {
+                      finalUrl += (finalUrl.includes("?") ? "&" : "?") + `t=${seconds}s`;
+                    }
+                  }
+                  return (
+                    <a
+                      href={finalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-display flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-link/40 px-3 py-1.5 text-xs font-medium text-brand-link transition-colors hover:bg-brand-link/10"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </a>
-                ) : null}
+                      View Resource
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </a>
+                  );
+                })() : null}
               </div>
             </article>
           ))}

@@ -48,35 +48,34 @@ export async function ensureQdrantCollection() {
   await collectionReadyPromise;
 }
 
-export async function upsertContentPoint(input: {
-  id: string;
-  vector: number[];
+export type QdrantPayload = {
   title: string;
   content: string;
   url?: string;
   type?: string;
   tags: string[];
   embeddingId: string;
-}) {
+  topic?: string;
+  startTime?: string;
+  endTime?: string;
+  chunkIndex?: number;
+};
+
+export async function upsertContentPoints(points: {
+  id: string;
+  vector: number[];
+  payload: QdrantPayload;
+}[]) {
   await ensureQdrantCollection();
 
   const client = getQdrantClient();
 
   await client.upsert(QDRANT_COLLECTION, {
     wait: true,
-    points: [
-      {
-        id: input.id,
-        vector: input.vector,
-        payload: {
-          title: input.title,
-          content: input.content,
-          url: input.url,
-          type: input.type,
-          tags: input.tags,
-          embeddingId: input.embeddingId,
-        },
-      },
-    ],
+    points: points.map((p) => ({
+      id: p.id,
+      vector: p.vector,
+      payload: p.payload,
+    })),
   });
 }

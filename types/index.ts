@@ -8,14 +8,27 @@ export type AuthUser = {
   role: UserRole;
 };
 
+export type ResourceType = "text" | "video" | "article" | "documentation" | "pdf_notes" | "playlist" | "course";
+
+export type ContentChunk = {
+  text: string;
+  topic: string;
+  startTime?: string;
+  endTime?: string;
+  chunkIndex: number;
+  embeddingId: string;
+};
+
 export type RecommendedResource = {
   title: string;
   content: string;
   url?: string;
-  type?: "text" | "video" | "article" | "documentation";
+  type?: ResourceType;
   tags: string[];
   embeddingId: string;
   score: number;
+  startTime?: string;
+  endTime?: string;
 };
 
 export type AIResponsePayload = {

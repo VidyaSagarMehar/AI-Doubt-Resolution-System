@@ -1,5 +1,14 @@
 import { InferSchemaType, Model, Schema, model, models } from "mongoose";
 
+const contentChunkSchema = new Schema({
+  text: { type: String, required: true },
+  topic: { type: String, required: true },
+  startTime: { type: String },
+  endTime: { type: String },
+  chunkIndex: { type: Number, required: true },
+  embeddingId: { type: String, required: true },
+});
+
 const contentSchema = new Schema(
   {
     title: {
@@ -7,20 +16,17 @@ const contentSchema = new Schema(
       required: true,
       trim: true,
     },
-    content: {
+    rawContent: {
       type: String,
       required: true,
-      trim: true,
+    },
+    chunks: {
+      type: [contentChunkSchema],
+      default: [],
     },
     tags: {
       type: [String],
       default: [],
-    },
-    embeddingId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
     },
     url: {
       type: String,
@@ -28,7 +34,7 @@ const contentSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["text", "video", "article", "documentation"],
+      enum: ["text", "video", "article", "documentation", "pdf_notes", "playlist", "course"],
       default: "text",
     },
   },

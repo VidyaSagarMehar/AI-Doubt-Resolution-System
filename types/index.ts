@@ -11,6 +11,8 @@ export type AuthUser = {
 export type RecommendedResource = {
   title: string;
   content: string;
+  url?: string;
+  type?: "text" | "video" | "article" | "documentation";
   tags: string[];
   embeddingId: string;
   score: number;

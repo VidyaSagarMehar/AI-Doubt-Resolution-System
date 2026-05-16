@@ -10,7 +10,10 @@ const studentNavItems = [
 	{ href: '/doubts' as Route, label: 'My Doubts' },
 ];
 
-const mentorNavItem = { href: '/mentor' as Route, label: 'Mentor Queue' };
+const mentorNavItems = [
+	{ href: '/mentor' as Route, label: 'Mentor Queue' },
+	{ href: '/admin/ingest' as Route, label: 'Knowledge Ingestion' },
+];
 
 export function DashboardHeader() {
 	const router = useRouter();
@@ -49,14 +52,16 @@ export function DashboardHeader() {
 							</Link>
 						))}
 
-						{user?.role === 'mentor' && (
-							<Link
-								href={mentorNavItem.href}
-								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface hover:text-brand-link"
-							>
-								{mentorNavItem.label}
-							</Link>
-						)}
+						{user?.role === 'mentor' &&
+							mentorNavItems.map((item) => (
+								<Link
+									key={item.href}
+									href={item.href}
+									className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface hover:text-brand-link"
+								>
+									{item.label}
+								</Link>
+							))}
 					</nav>
 
 					{/* User Profile Chip (Improved UI) */}

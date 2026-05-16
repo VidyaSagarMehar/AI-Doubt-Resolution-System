@@ -14,7 +14,7 @@ import {
 } from "@/lib/qdrant";
 import type { RecommendedResource } from "@/types";
 
-const RAG_CONFIDENCE_THRESHOLD = 0.45;
+const RAG_CONFIDENCE_THRESHOLD = 0.40;
 
 export async function generateAIResponseForDoubt(doubtId: string) {
   await connectToDatabase();
@@ -23,18 +23,70 @@ export async function generateAIResponseForDoubt(doubtId: string) {
   const openai = getOpenAIClient();
 
   const doubt = await Doubt.findById(doubtId).lean();
+  if (!doubt) throw new Error("Doubt not found.");
 
-  if (!doubt) {
-    throw new Error("Doubt not found.");
+  // =========================================================
+  // Fetch Conversation History
+  // =========================================================
+
+  const historyDoubts = await Doubt.find({
+    userId: doubt.userId,
+    _id: { $ne: doubtId },
+  })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .lean();
+
+  const historyIds = historyDoubts.map((d) => d._id);
+  const historyResponses = await AIResponse.find({
+    doubtId: { $in: historyIds },
+  }).lean();
+
+  // Map history for prompt context
+  const conversationHistory = historyDoubts
+    .reverse()
+    .map((d) => {
+      const resp = historyResponses.find(
+        (r) => r.doubtId.toString() === d._id.toString(),
+      );
+      return `Student: ${d.description}\nAI: ${resp?.answer || "(No response)"}`;
+    })
+    .join("\n\n");
+
+  // =========================================================
+  // Query Rewriting (Contextualization)
+  // =========================================================
+
+  let searchSourceText = `${doubt.title}\n\n${doubt.description}`;
+
+  if (conversationHistory) {
+    try {
+      const rewriteCompletion = await openai.chat.completions.create({
+        model: OPENAI_CHAT_MODEL,
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a search query optimizer. Given a conversation history and a new student doubt, rewrite the doubt to be a self-contained, descriptive search query for vector search. Return ONLY the rewritten text.",
+          },
+          {
+            role: "user",
+            content: `History:\n${conversationHistory}\n\nNew Doubt: ${searchSourceText}`,
+          },
+        ],
+      });
+      searchSourceText = rewriteCompletion.choices[0]?.message?.content?.trim() || searchSourceText;
+    } catch (error) {
+      console.error("Query rewrite failed:", error);
+    }
   }
-
-  const queryText = `${doubt.title}\n\n${doubt.description}`;
 
   // =========================================================
   // Create Query Embedding
   // =========================================================
 
-  const queryEmbedding = await createEmbedding(queryText);
+  const queryEmbedding = await createEmbedding(searchSourceText);
 
   // =========================================================
   // Retrieve Similar Documents
@@ -69,43 +121,35 @@ Content: ${document.content}`,
     ? "rag"
     : "fallback";
 
-  const systemPrompt = hasStrongContext
-    ? `
-You are an expert AI tutor.
+  const systemPrompt = `
+You are a helpful, brief, and concise AI tutor. 
 
-Use the retrieved study material to answer the student's question accurately.
-
-Rules:
-- Prioritize retrieved study content
-- Keep answers educational and concise
-- If context contains the answer, do not hallucinate
-- Explain concepts clearly
-`
-    : `
-You are an expert AI tutor.
-
-No strong study material was found.
-
-Answer using your general technical knowledge in a clear and educational way.
+${
+  hasStrongContext
+    ? "Use the retrieved study material (including video lectures) to answer accurately. Favor brevity over length."
+    : "No exact material found. Answer briefly using general knowledge."
+}
 
 Rules:
-- Be accurate
-- Explain concepts simply
-- Mention that the answer is based on general AI knowledge
+- Keep answers short (max 2-3 paragraphs).
+- Use bullet points for readability.
+- If a relevant video lecture is found in the sources, briefly mention it.
+- Explain concepts simply for students.
 `;
 
-  const userPrompt = hasStrongContext
-    ? `
-Retrieved Study Material:
-
-${contextBlocks}
-
+  const userPrompt = `
+${
+  conversationHistory
+    ? `Recent Conversation History:\n${conversationHistory}\n\n`
+    : ""
+}
+${
+  hasStrongContext
+    ? `Retrieved Study Material:\n${contextBlocks}\n\n`
+    : ""
+}
 Student Question:
-${queryText}
-`
-    : `
-Student Question:
-${queryText}
+${doubt.description}
 `;
 
   // =========================================================
@@ -116,14 +160,8 @@ ${queryText}
     model: OPENAI_CHAT_MODEL,
     temperature: hasStrongContext ? 0.2 : 0.4,
     messages: [
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-      {
-        role: "user",
-        content: userPrompt,
-      },
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
     ],
   });
 
@@ -137,11 +175,9 @@ ${queryText}
 
   const answer = hasStrongContext
     ? generatedAnswer
-    : `No exact course material was found for this topic.
-
-Here is a general explanation:
-
-${generatedAnswer}`;
+    : conversationHistory
+    ? generatedAnswer // If we have history, don't show the "No material found" warning as it might be a simple follow-up
+    : `No exact course material was found for this topic.\n\nHere is a general explanation:\n\n${generatedAnswer}`;
 
   // =========================================================
   // Recommended Resources
@@ -254,12 +290,16 @@ async function searchSimilarContent(embedding: number[]) {
       title?: string;
       content?: string;
       tags?: string[];
+      url?: string;
+      type?: string;
       embeddingId?: string;
     };
 
     return {
       title: payload.title ?? "Untitled resource",
       content: payload.content ?? "",
+      url: payload.url,
+      type: payload.type as any,
       tags: payload.tags ?? [],
       embeddingId:
         payload.embeddingId ?? String(item.id ?? crypto.randomUUID()),
@@ -280,6 +320,8 @@ async function searchSimilarContent(embedding: number[]) {
   return fallbackContent.map((item) => ({
     title: item.title,
     content: item.content,
+    url: item.url,
+    type: item.type as any,
     tags: item.tags,
     embeddingId: item.embeddingId,
     score: 0,

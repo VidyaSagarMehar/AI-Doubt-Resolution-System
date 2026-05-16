@@ -19,7 +19,7 @@ export const loginSchema = z.object({
 
 export const doubtSchema = z.object({
   title: z.string().max(150).transform(sanitizeText).optional(),
-  description: z.string().min(10).max(5000).transform(sanitizeMultilineText),
+  description: z.string().min(3).max(5000).transform(sanitizeMultilineText),
 });
 
 export const feedbackSchema = z.object({

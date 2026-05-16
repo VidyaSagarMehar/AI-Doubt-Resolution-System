@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { RecommendationList } from '@/components/RecommendationList';
 import { useAuth } from '@/components/providers/AuthProvider';
 import type { DoubtDetail, FeedbackPayload } from '@/types';
@@ -241,9 +243,11 @@ export default function DoubtDetailPage() {
 
 						{doubt.aiResponse ? (
 							<>
-								<p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-brand-neutral/80">
-									{doubt.aiResponse.answer}
-								</p>
+								<div className="mt-4 prose prose-invert max-w-none text-sm leading-7 text-brand-neutral/80">
+									<ReactMarkdown remarkPlugins={[remarkGfm]}>
+										{doubt.aiResponse.answer}
+									</ReactMarkdown>
+								</div>
 
 								{!isMentor ? (
 									<div className="mt-6 space-y-4">
@@ -387,9 +391,11 @@ export default function DoubtDetailPage() {
 												{formatDate(reply.createdAt)}
 											</p>
 										</div>
-										<p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-brand-neutral/80">
-											{reply.message}
-										</p>
+										<div className="mt-3 prose prose-invert max-w-none text-sm leading-7 text-brand-neutral/80">
+											<ReactMarkdown remarkPlugins={[remarkGfm]}>
+												{reply.message}
+											</ReactMarkdown>
+										</div>
 									</div>
 								))}
 							</div>

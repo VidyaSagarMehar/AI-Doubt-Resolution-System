@@ -26,31 +26,67 @@ export function RecommendationList({
           {resources.map((resource) => (
             <article
               key={resource.embeddingId}
-              className="rounded-xl border border-brand-border bg-brand-bg p-4 transition-colors duration-150 hover:border-brand-accent/30"
+              className="group rounded-xl border border-brand-border bg-brand-bg p-4 transition-all duration-200 hover:border-brand-accent/40 hover:shadow-lg"
             >
               <div className="flex items-start justify-between gap-3">
-                <h4 className="font-display font-semibold text-brand-text">
-                  {resource.title}
-                </h4>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-accent/20 bg-brand-accent/5 text-lg transition-transform group-hover:scale-110">
+                    {resource.type === "video"
+                      ? "📺"
+                      : resource.type === "article"
+                        ? "📄"
+                        : resource.type === "documentation"
+                          ? "📚"
+                          : "📝"}
+                  </span>
+                  <h4 className="font-display font-semibold text-brand-text">
+                    {resource.title}
+                  </h4>
+                </div>
                 <span className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
-                  {(resource.score * 100).toFixed(1)}%
+                  {(resource.score * 100).toFixed(1)}% match
                 </span>
               </div>
-              <p className="mt-2 line-clamp-4 text-sm leading-6 text-brand-neutral/70">
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-brand-neutral/70">
                 {resource.content}
               </p>
-              {resource.tags.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
+
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-2">
                   {resource.tags.map((tag) => (
                     <span
                       key={`${resource.embeddingId}-${tag}`}
-                      className="rounded-full border border-brand-border px-2.5 py-0.5 text-xs text-brand-neutral/70"
+                      className="rounded-full border border-brand-border bg-brand-surface/50 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-brand-neutral/50"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-              ) : null}
+
+                {resource.url ? (
+                  <a
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-display flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-link/40 px-3 py-1.5 text-xs font-medium text-brand-link transition-colors hover:bg-brand-link/10"
+                  >
+                    View Resource
+                    <svg
+                      className="h-3 w-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+                ) : null}
+              </div>
             </article>
           ))}
         </div>

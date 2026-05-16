@@ -53,6 +53,8 @@ export async function upsertContentPoint(input: {
   vector: number[];
   title: string;
   content: string;
+  url?: string;
+  type?: string;
   tags: string[];
   embeddingId: string;
 }) {
@@ -69,6 +71,8 @@ export async function upsertContentPoint(input: {
         payload: {
           title: input.title,
           content: input.content,
+          url: input.url,
+          type: input.type,
           tags: input.tags,
           embeddingId: input.embeddingId,
         },

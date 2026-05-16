@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useRef, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/components/providers/AuthProvider";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { RecommendationList } from "@/components/RecommendationList";
 import type { AIResponsePayload, DoubtDetail } from "@/types";
 
@@ -63,7 +65,8 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
 
   /* ── Submit doubt & get AI answer ─────────────────────────────────── */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    if (event) event.preventDefault();
+    if (loading || !description.trim()) return;
     setLoading(true);
     setError("");
 
@@ -76,7 +79,10 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
       const doubtPayload = await doubtResponse.json();
 
       if (!doubtResponse.ok) {
-        throw new Error(doubtPayload.error ?? "Failed to create doubt.");
+        const errorMsg = doubtPayload.details?.fieldErrors?.description?.[0] 
+          ? `Description: ${doubtPayload.details.fieldErrors.description[0]}`
+          : (doubtPayload.error ?? "Failed to create doubt.");
+        throw new Error(errorMsg);
       }
 
       const doubt = doubtPayload.data as DoubtDetail;
@@ -102,7 +108,6 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
           d._id === doubt._id ? { ...d, aiResponse: aiPayload.data } : d
         )
       );
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -192,6 +197,9 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
 
   /* ── Shared feedback + escalate block ───────────────────────────── */
   const FeedbackActions = ({ doubt, compact = false }: { doubt: DoubtDetail; compact?: boolean }) => {
+    // If user is a mentor, they shouldn't see feedback or escalation actions
+    if (user?.role === "mentor") return null;
+
     const existingFeedback = doubt.feedback && doubt.feedback.length > 0
       ? doubt.feedback[doubt.feedback.length - 1].isHelpful
       : null;
@@ -302,9 +310,11 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
               {(doubt.aiResponse.confidenceScore).toFixed(1)}% confidence
             </span>
           </div>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-brand-neutral/90">
-            {doubt.aiResponse.answer}
-          </p>
+          <div className="mt-3 prose prose-invert max-w-none text-sm leading-7 text-brand-neutral/90">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {doubt.aiResponse.answer}
+            </ReactMarkdown>
+          </div>
 
           {/* Feedback + escalate — inline in AI answer card */}
           <div className="mt-4 border-t border-brand-accent/20 pt-3">
@@ -332,12 +342,14 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
 
       {/* Recommendations — collapsible */}
       {doubt.aiResponse && doubt.aiResponse.recommendedResources.length > 0 ? (
-        <details className="rounded-xl border border-brand-border bg-brand-bg">
-          <summary className="cursor-pointer select-none px-4 py-3 text-xs font-semibold text-brand-neutral/70">
-            📚 {doubt.aiResponse.recommendedResources.length} Recommended
-            Resources
+        <details 
+          className="rounded-xl border border-brand-accent/20 bg-brand-bg open:border-brand-accent/40" 
+          open={doubt.aiResponse.recommendedResources.some(r => r.type === 'video')}
+        >
+          <summary className="cursor-pointer select-none px-4 py-3 text-xs font-semibold text-brand-neutral/70 hover:text-brand-accent transition-colors">
+            {doubt.aiResponse.recommendedResources.some(r => r.type === 'video') ? "📺 Video Lecture Found" : "📚 Recommended Resources"} ({doubt.aiResponse.recommendedResources.length})
           </summary>
-          <div className="border-t border-brand-border px-4 pb-4 pt-3">
+          <div className="border-t border-brand-accent/10 px-4 pb-4 pt-3">
             <RecommendationList
               resources={doubt.aiResponse.recommendedResources}
               title=""
@@ -399,6 +411,12 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
                 id="widget-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+                  }
+                }}
                 placeholder="What are you stuck on? Be as detailed as possible."
                 className="w-full !min-h-32 !rounded-xl !py-2 !text-sm"
                 required
@@ -499,6 +517,12 @@ export function ChatUI({ mode = "page", onClose }: ChatUIProps) {
                 id="description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+                  }
+                }}
                 placeholder="Explain what you're trying to achieve, what you've tried, and exactly where you're getting stuck. The more detail you provide, the better the AI can help!"
                 className="!min-h-56"
                 required

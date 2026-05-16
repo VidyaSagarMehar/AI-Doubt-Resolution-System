@@ -22,6 +22,15 @@ const contentSchema = new Schema(
       unique: true,
       index: true,
     },
+    url: {
+      type: String,
+      trim: true,
+    },
+    type: {
+      type: String,
+      enum: ["text", "video", "article", "documentation"],
+      default: "text",
+    },
   },
   {
     timestamps: true,

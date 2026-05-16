@@ -147,15 +147,7 @@ export function setAuthCookie(response: NextResponse, token: string) {
 }
 
 export function clearAuthCookie(response: NextResponse) {
-  response.cookies.set({
-    name: AUTH_COOKIE_NAME,
-    value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
-  });
+  response.cookies.delete(AUTH_COOKIE_NAME);
 }
 
 export function getUserFromRequest(request: NextRequest): AuthUser | null {

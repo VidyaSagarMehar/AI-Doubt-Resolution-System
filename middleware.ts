@@ -8,7 +8,6 @@ export async function middleware(request: NextRequest) {
   const isAuthApiRoute = pathname.startsWith("/api/auth");
   const isProtectedApiRoute = pathname.startsWith("/api/");
   const isProtectedPageRoute =
-    pathname === "/" ||
     pathname.startsWith("/ask") ||
     pathname.startsWith("/doubts") ||
     pathname.startsWith("/mentor");

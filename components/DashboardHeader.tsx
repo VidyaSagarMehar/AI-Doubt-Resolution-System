@@ -40,20 +40,10 @@ export function DashboardHeader() {
 
 				{/* Right Section */}
 				<div className="flex flex-wrap items-center gap-3 sm:gap-4">
-					{/* Nav links */}
-					<nav className="flex flex-wrap gap-1">
-						{studentNavItems.map((item) => (
-							<Link
-								key={item.href}
-								href={item.href}
-								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface hover:text-brand-link"
-							>
-								{item.label}
-							</Link>
-						))}
-
-						{user?.role === 'mentor' &&
-							mentorNavItems.map((item) => (
+					{/* Nav links (Only if logged in) */}
+					{user && (
+						<nav className="flex flex-wrap gap-1">
+							{studentNavItems.map((item) => (
 								<Link
 									key={item.href}
 									href={item.href}
@@ -62,33 +52,61 @@ export function DashboardHeader() {
 									{item.label}
 								</Link>
 							))}
-					</nav>
 
-					{/* User Profile Chip (Improved UI) */}
-					<div className="flex items-center gap-3 rounded-xl border border-brand-border bg-brand-surface px-4 py-2 shadow-sm">
-						{/* Avatar */}
-						<div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-accent/20 text-sm font-semibold text-brand-accent">
-							{loading ? '...' : (user?.name?.charAt(0)?.toUpperCase() ?? 'U')}
+							{user?.role === 'mentor' &&
+								mentorNavItems.map((item) => (
+									<Link
+										key={item.href}
+										href={item.href}
+										className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface hover:text-brand-link"
+									>
+										{item.label}
+									</Link>
+								))}
+						</nav>
+					)}
+
+					{/* User Profile or Auth Links */}
+					{user ? (
+						<>
+							<div className="flex items-center gap-3 rounded-xl border border-brand-border bg-brand-surface px-4 py-2 shadow-sm">
+								<div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-accent/20 text-sm font-semibold text-brand-accent">
+									{loading ? '...' : (user?.name?.charAt(0)?.toUpperCase() ?? 'U')}
+								</div>
+
+								<div className="flex flex-col leading-tight">
+									<p className="font-display text-sm font-semibold text-brand-text">
+										{loading ? 'Loading...' : (user?.name ?? 'Unknown user')}
+									</p>
+									<p className="text-[10px] uppercase tracking-wide text-brand-neutral/60">
+										{user?.role ?? 'guest'}
+									</p>
+								</div>
+							</div>
+
+							<button
+								onClick={() => void handleLogout()}
+								className="font-display rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:border-brand-accent hover:text-brand-accent"
+							>
+								Log out
+							</button>
+						</>
+					) : (
+						<div className="flex items-center gap-2">
+							<Link
+								href="/login"
+								className="font-display rounded-lg px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:bg-brand-surface"
+							>
+								Log in
+							</Link>
+							<Link
+								href="/signup"
+								className="font-display rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-brand-bg transition-all duration-150 hover:brightness-110"
+							>
+								Sign Up
+							</Link>
 						</div>
-
-						{/* Name + Role */}
-						<div className="flex flex-col leading-tight">
-							<p className="font-display text-sm font-semibold text-brand-text">
-								{loading ? 'Loading...' : (user?.name ?? 'Unknown user')}
-							</p>
-							<p className="text-[10px] uppercase tracking-wide text-brand-neutral/60">
-								{user?.role ?? 'guest'}
-							</p>
-						</div>
-					</div>
-
-					{/* Logout */}
-					<button
-						onClick={() => void handleLogout()}
-						className="font-display rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-text/80 transition-all duration-150 hover:border-brand-accent hover:text-brand-accent"
-					>
-						Log out
-					</button>
+					)}
 				</div>
 			</div>
 		</header>

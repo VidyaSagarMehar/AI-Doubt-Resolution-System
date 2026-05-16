@@ -211,8 +211,7 @@ erDiagram
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/vidyaSagarMehar/house-of-edtech.git
-cd house-of-edtech
+git clone https://github.com/VidyaSagarMehar/AI-Doubt-Resolution-System
 npm install
 ```
 

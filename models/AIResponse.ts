@@ -7,6 +7,13 @@ const sourceSchema = new Schema(
     tags: { type: [String], default: [] },
     embeddingId: { type: String, required: true },
     score: { type: Number, required: true },
+    url: { type: String },
+    type: { type: String },
+    startTime: { type: String },
+    endTime: { type: String },
+    videoId: { type: String },
+    channelName: { type: String },
+    thumbnailUrl: { type: String },
   },
   { _id: false },
 );
@@ -46,8 +53,11 @@ export type AIResponseDocument = InferSchemaType<typeof aiResponseSchema> & {
   _id: string;
 };
 
-const AIResponse =
-  (models.AIResponse as Model<AIResponseDocument>) ||
-  model("AIResponse", aiResponseSchema);
+// Force schema reload in Next.js development
+if (models.AIResponse) {
+  delete models.AIResponse;
+}
+
+const AIResponse = model<AIResponseDocument>("AIResponse", aiResponseSchema);
 
 export default AIResponse;

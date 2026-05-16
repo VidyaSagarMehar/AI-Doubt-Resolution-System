@@ -23,73 +23,82 @@ export function RecommendationList({
         </p>
       ) : (
         <div className="mt-4 space-y-3">
-          {resources.map((resource) => (
-            <article
-              key={resource.embeddingId}
-              className="group rounded-xl border border-brand-border bg-brand-bg p-4 transition-all duration-200 hover:border-brand-accent/40 hover:shadow-lg"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-accent/20 bg-brand-accent/5 text-lg transition-transform group-hover:scale-110">
-                    {resource.type === "video" || resource.type === "playlist"
-                      ? "📺"
-                      : resource.type === "course"
-                        ? "🎓"
-                        : resource.type === "article"
-                          ? "📄"
-                          : resource.type === "pdf_notes"
-                            ? "📓"
-                            : resource.type === "documentation"
-                              ? "📚"
-                              : "📝"}
-                  </span>
-                  <div className="flex flex-col">
-                    <h4 className="font-display font-semibold text-brand-text">
-                      {resource.title}
-                    </h4>
-                    {resource.startTime && (
-                      <span className="text-[10px] font-medium text-brand-accent mt-0.5">
-                        ⏱️ {resource.startTime} {resource.endTime ? `- ${resource.endTime}` : ""}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
-                  {(resource.score * 100).toFixed(1)}% match
-                </span>
-              </div>
-              <p className="mt-3 line-clamp-3 text-sm leading-6 text-brand-neutral/70">
-                {resource.content}
-              </p>
+          {resources.map((resource) => {
+            let finalUrl = resource.url;
+            if (finalUrl && resource.startTime && (finalUrl.includes("youtube.com") || finalUrl.includes("youtu.be"))) {
+              // Convert "1:24" to seconds for YT
+              const parts = resource.startTime.split(":");
+              let seconds = 0;
+              if (parts.length === 3) {
+                seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+              } else if (parts.length === 2) {
+                seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+              }
+              if (seconds > 0) {
+                finalUrl += (finalUrl.includes("?") ? "&" : "?") + `t=${seconds}s`;
+              }
+            }
 
-              <div className="mt-4 flex items-center justify-between gap-4">
-                <div className="flex flex-wrap gap-2">
-                  {resource.tags.map((tag) => (
-                    <span
-                      key={`${resource.embeddingId}-${tag}`}
-                      className="rounded-full border border-brand-border bg-brand-surface/50 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-brand-neutral/50"
-                    >
-                      {tag}
+            return (
+              <article
+                key={resource.embeddingId}
+                className="group rounded-xl border border-brand-border bg-brand-bg p-4 transition-all duration-200 hover:border-brand-accent/40 hover:shadow-lg"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-accent/20 bg-brand-accent/5 text-lg transition-transform group-hover:scale-110">
+                      {resource.type === "video" || resource.type === "playlist"
+                        ? "📺"
+                        : resource.type === "course"
+                          ? "🎓"
+                          : resource.type === "article"
+                            ? "📄"
+                            : resource.type === "pdf_notes"
+                              ? "📓"
+                              : resource.type === "documentation"
+                                ? "📚"
+                                : "📝"}
                     </span>
-                  ))}
+                    <div className="flex flex-col">
+                      {finalUrl ? (
+                        <a href={finalUrl} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-brand-accent transition-colors">
+                          <h4 className="font-display font-semibold text-brand-text hover:text-brand-accent transition-colors">
+                            {resource.title}
+                          </h4>
+                        </a>
+                      ) : (
+                        <h4 className="font-display font-semibold text-brand-text">
+                          {resource.title}
+                        </h4>
+                      )}
+                      {resource.startTime && (
+                        <span className="text-[10px] font-medium text-brand-accent mt-0.5">
+                          ⏱️ {resource.startTime} {resource.endTime ? `- ${resource.endTime}` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-0.5 text-xs font-semibold text-brand-accent">
+                    {(resource.score * 100).toFixed(1)}% match
+                  </span>
                 </div>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-brand-neutral/70">
+                  {resource.content}
+                </p>
 
-                {resource.url ? (() => {
-                  let finalUrl = resource.url;
-                  if (resource.startTime && (finalUrl.includes("youtube.com") || finalUrl.includes("youtu.be"))) {
-                    // Convert "1:24" to seconds for YT
-                    const parts = resource.startTime.split(":");
-                    let seconds = 0;
-                    if (parts.length === 3) {
-                      seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
-                    } else if (parts.length === 2) {
-                      seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-                    }
-                    if (seconds > 0) {
-                      finalUrl += (finalUrl.includes("?") ? "&" : "?") + `t=${seconds}s`;
-                    }
-                  }
-                  return (
+                <div className="mt-4 flex flex-col items-start gap-4">
+                  <div className="flex flex-wrap gap-2">
+                    {resource.tags.map((tag) => (
+                      <span
+                        key={`${resource.embeddingId}-${tag}`}
+                        className="rounded-full border border-brand-border bg-brand-surface/50 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-brand-neutral/50"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {finalUrl ? (
                     <a
                       href={finalUrl}
                       target="_blank"
@@ -111,11 +120,11 @@ export function RecommendationList({
                         />
                       </svg>
                     </a>
-                  );
-                })() : null}
-              </div>
-            </article>
-          ))}
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </aside>
